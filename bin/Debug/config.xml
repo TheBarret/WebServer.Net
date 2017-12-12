@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<Config Base=".\html">
+
+	<!-- 
+		Virtual Host Definitions
+		Base	: Directory name (Relative)
+		Prefix	: hostname : port
+	-->
+	<VirtualHost Base="\localhost" Prefix="*:80" Encoding="UTF-8" KeepAlive="True">
+	
+		<!-- Custom Headers -->
+		<Headers>
+			Accept 			= */*
+			Accept-Language = en-US
+			Cache-Control	= no-cache
+			Pragma			= no-cache
+		</Headers>
+		
+		<!-- Look for these index files -->
+		<DefaultIndexPages>
+			index.htm
+			index.html
+		</DefaultIndexPages>
+		
+		<!-- Illegal path characters -->
+		<IllegalPathChars>
+			*..*
+		</IllegalPathChars>
+		
+		<!-- Hide directories and files beginning with a dot -->
+		<HideDotNames>True</HideDotNames>
+		
+		<!-- Hide files with these extensions -->
+		<HiddenFileTypes>
+			*.db
+			*.cfg
+			*.log
+			*.xml
+			*.ini
+			*.conf
+		</HiddenFileTypes>
+		
+		<!-- Maximum GET qeury length per request -->
+		<MaxQueryLength>255</MaxQueryLength>
+		
+		<!-- Maximum GET variable size per query -->
+		<MaxQueryVariableSize>255</MaxQueryVariableSize>
+		
+		<!-- Allow users to browse directories -->
+		<AllowDirListing>True</AllowDirListing>
+		
+		<!-- Directory Listing Template -->
+		<DirectoryListingTemplate>template.xml</DirectoryListingTemplate>
+		
+	</VirtualHost>
+	
+	<!-- Threadpool Settings -->
+	<Threads Workers="2" IO="2" Delay="500"></Threads>
+	
+	<!-- Content Type Definitions -->
+	<ContentType>
+		.txt 	= text/plain
+		.md 	= text/plain
+		.css 	= text/css
+		.htm 	= text/html
+		.html 	= text/html
+		.shtml 	= text/html
+		.png 	= image/png
+		.gif 	= image/gif
+		.jpeg 	= image/jpeg
+		.jpg 	= image/jpeg
+		.ico 	= image/x-icon
+		.js 	= application/x-javascript
+		.zip 	= application/zip
+		.rar 	= application/x-rar-compressed
+	</ContentType>
+	
+</Config>
