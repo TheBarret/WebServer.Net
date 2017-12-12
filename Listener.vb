@@ -50,7 +50,7 @@ Public Class Listener
                 If (Me.Queue.Any) Then
                     ThreadPool.QueueUserWorkItem(New WaitCallback(AddressOf Me.BeginClientRequest), Me.Queue.Dequeue)
                 End If
-                Thread.Sleep(500)
+                Thread.Sleep(Me.Delay)
                 Me.Timer.Reset()
                 RaiseEvent ServerHeartBeat(Me.Timer.Elapsed)
             Loop While Me.Running
