@@ -47,8 +47,7 @@ Public Class Client
         Me.SendRequest(GZip.Compress(New Generator(Me).DirectoryList(Dir)), "text/html", DateTime.Now)
     End Sub
     Public Sub PrepairCustom(Value As String, ContentType As String)
-        Dim buffer() As Byte = Me.Environment.Encoder.GetBytes(Value)
-        Me.SendRequest(buffer, ContentType, DateTime.Now)
+        Me.SendRequest(GZip.Compress(Me.Environment.Encoder.GetBytes(Value)), ContentType, DateTime.Now)
     End Sub
     Public Sub SetStatus(StatusCode As HttpStatusCode)
         Me.Parent.Log(String.Format("[Response] {0}", StatusCode.ToString))
