@@ -11,10 +11,10 @@
 	
 		<!-- Custom Headers -->
 		<Headers>
-			Accept 		= */*
+			Accept 			= */*
 			Accept-Language = en-US
 			Cache-Control	= no-cache
-			Pragma		= no-cache
+			Pragma			= no-cache
 		</Headers>
 		
 		<!-- Look for these index files -->
@@ -53,21 +53,8 @@
 		<!-- Directory Listing Template -->
 		<DirectoryListingTemplate>template.xml</DirectoryListingTemplate>
 		
-		<!-- 
-			Custom Error Page 
-			{0} = Error id
-			{1} = Error tag
-		-->
-		<ErrorPage>
-			<![CDATA[
-			<html><head>
-			<title>Error {0}</title>
-			</head><body>
-			<div align="center">
-			<h1>Error {0} ({1})</h1>
-			</div></body></html>
-			]]>
-		</ErrorPage>
+		<!-- Error Page Template-->
+		<ErrorPageTemplate>template.xml</ErrorPageTemplate>
 		
 	</VirtualHost>
 	
