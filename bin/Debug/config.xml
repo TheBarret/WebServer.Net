@@ -11,10 +11,10 @@
 	
 		<!-- Custom Headers -->
 		<Headers>
-			Accept 			= */*
+			Accept 		= */*
 			Accept-Language = en-US
 			Cache-Control	= no-cache
-			Pragma			= no-cache
+			Pragma		= no-cache
 		</Headers>
 		
 		<!-- Look for these index files -->
@@ -60,16 +60,12 @@
 		-->
 		<ErrorPage>
 			<![CDATA[
-				<html>
-					<head>
-						<title>Error {0}</title>
-					</head>
-					<body>
-						<div align="center">
-							<h1>Error {0} ({1})</h1>
-						</div>
-					</body>
-				</html>
+			<html><head>
+			<title>Error {0}</title>
+			</head><body>
+			<div align="center">
+			<h1>Error {0} ({1})</h1>
+			</div></body></html>
 			]]>
 		</ErrorPage>
 		
