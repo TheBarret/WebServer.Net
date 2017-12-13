@@ -11,10 +11,10 @@
 	
 		<!-- Custom Headers -->
 		<Headers>
-			Accept 			= */*
+			Accept 		= */*
 			Accept-Language = en-US
 			Cache-Control	= no-cache
-			Pragma			= no-cache
+			Pragma		= no-cache
 		</Headers>
 		
 		<!-- Look for these index files -->
