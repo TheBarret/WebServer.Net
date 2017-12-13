@@ -69,7 +69,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Services\Base64.vb" />
+    <Compile Include="Enums.vb" />
     <Compile Include="Client.vb" />
     <Compile Include="Config.vb" />
     <Compile Include="Extensions.vb" />

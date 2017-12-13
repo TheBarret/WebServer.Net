@@ -46,6 +46,7 @@ Public Class VirtualHost
     Public Property Prefix As String
     Public Property Encoder As Encoding
     Public Property KeepAlive As Boolean
+    Public Property ErrorPage As String
     Public Property DocumentRoot As DirectoryInfo
     Public Property MaxQuerySize As Integer = 255
     Public Property MaxQueryLength As Integer = 255

@@ -13,9 +13,9 @@ Public Class Generator
         Me.Elements = New Dictionary(Of Integer, String)
     End Sub
     Public Function DirectoryList(Dir As String) As Byte()
-        If (File.Exists(Me.Client.GetLocalPath(Me.Client.Environment.DirectoryTemplate)) AndAlso Directory.Exists(Dir)) Then
+        If (File.Exists(Me.Client.GetLocalPath(Me.Client.Config.DirectoryTemplate)) AndAlso Directory.Exists(Dir)) Then
             Dim document As New XmlDocument, base As XmlElement, address As String = Me.Client.GetRelativePath(Dir)
-            Using fs As New FileStream(Me.Client.GetLocalPath(Me.Client.Environment.DirectoryTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
+            Using fs As New FileStream(Me.Client.GetLocalPath(Me.Client.Config.DirectoryTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
                 document.Load(fs)
             End Using
             base = document.GetElementsByTagName("DirectoryTemplate").Cast(Of XmlElement)().First
@@ -26,7 +26,7 @@ Public Class Generator
                 Me.Elements.Add(2, base.SelectSingleNode("Files").InnerText)
                 For Each d As String In Directory.GetDirectories(Dir)
                     Dim current As New DirectoryInfo(d)
-                    If (Me.Client.Environment.HideDotNames And current.Name.StartsWith(".")) Then
+                    If (Me.Client.Config.HideDotNames And current.Name.StartsWith(".")) Then
                         Continue For
                     End If
                     output.Add(String.Format(Me.Elements(1), address, current.Name, current.LastWriteTime.ToString("r")))
@@ -34,7 +34,7 @@ Public Class Generator
                 For Each f As String In Directory.GetFiles(Dir)
                     Dim current As New FileInfo(f)
                     If (Not Me.Client.IsHiddenFileType(f)) Then
-                        If (Me.Client.Environment.HideDotNames And current.Name.StartsWith(".")) Then
+                        If (Me.Client.Config.HideDotNames And current.Name.StartsWith(".")) Then
                             Continue For
                         End If
                         If (current.Name.ToLower.Equals(Generator.README_FILENAME)) Then
@@ -45,7 +45,7 @@ Public Class Generator
                         output.Add(String.Format(Me.Elements(2), address, current.Name, current.LastWriteTime.ToString("r"), current.Length.HumanReadable))
                     End If
                 Next
-                Me.AddRange(Me.Client.Environment.Encoder.GetBytes(Me.Elements(0).Replace("{TABLE}", String.Join(Environment.NewLine, output))))
+                Me.AddRange(Me.Client.Config.Encoder.GetBytes(Me.Elements(0).Replace("{TABLE}", String.Join(Environment.NewLine, output))))
             End If
         End If
         Return Me.ToArray

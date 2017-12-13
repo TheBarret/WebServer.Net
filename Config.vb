@@ -97,16 +97,13 @@ Public MustInherit Class Config
                                 Integer.TryParse(node.SelectSingleNode("MaxQueryLength").InnerText, vhost.MaxQueryLength)
                                 Integer.TryParse(node.SelectSingleNode("MaxQueryVariableSize").InnerText, vhost.MaxQuerySize)
                                 Boolean.TryParse(node.SelectSingleNode("AllowDirListing").InnerText, vhost.AllowDirListing)
-                                If (Config.HasDefinedDirectoryTemplate(node)) Then
-                                    vhost.DirectoryTemplate = node.SelectSingleNode("DirectoryListingTemplate").InnerText
-                                End If
-                                If (Config.HasDefinedIllegalChars(node)) Then
-                                    vhost.IllegalPathChars = VirtualHost.Parse(node.SelectSingleNode("IllegalPathChars").InnerText)
-                                End If
-                                Listener.VirtualHosts.Add(vhost)
+                                vhost.ErrorPage = node.SelectSingleNode("ErrorPage").InnerText
+                                vhost.DirectoryTemplate = node.SelectSingleNode("DirectoryListingTemplate").InnerText
+                                vhost.IllegalPathChars = VirtualHost.Parse(node.SelectSingleNode("IllegalPathChars").InnerText)
+                                listener.VirtualHosts.Add(vhost)
                             Next
                         End If
-                        Return Listener
+                        Return listener
                     Else
                         Throw New Exception("config base directory not set")
                     End If
@@ -162,18 +159,6 @@ Public MustInherit Class Config
     ''' <summary>
     ''' Validates XML element
     ''' </summary>
-    Public Shared Function HasDefinedDirectoryTemplate(node As XmlElement) As Boolean
-        Return node.SelectSingleNode("DirectoryListingTemplate") IsNot Nothing
-    End Function
-    ''' <summary>
-    ''' Validates XML element
-    ''' </summary>
-    Public Shared Function HasDefinedIllegalChars(node As XmlElement) As Boolean
-        Return node.SelectSingleNode("IllegalPathChars") IsNot Nothing
-    End Function
-    ''' <summary>
-    ''' Validates XML element
-    ''' </summary>
     Public Shared Function ValidateContentType(node As XmlElement) As Boolean
         Return node.SelectSingleNode("ContentType") IsNot Nothing
     End Function
@@ -186,7 +171,11 @@ Public MustInherit Class Config
                node.SelectSingleNode("DefaultIndexPages") IsNot Nothing AndAlso
                node.SelectSingleNode("MaxQueryLength") IsNot Nothing AndAlso
                node.SelectSingleNode("MaxQueryVariableSize") IsNot Nothing AndAlso
-               node.SelectSingleNode("AllowDirListing") IsNot Nothing
+               node.SelectSingleNode("AllowDirListing") IsNot Nothing AndAlso
+               node.SelectSingleNode("HideDotNames") IsNot Nothing AndAlso
+               node.SelectSingleNode("IllegalPathChars") IsNot Nothing AndAlso
+               node.SelectSingleNode("ErrorPage") IsNot Nothing AndAlso
+               node.SelectSingleNode("DirectoryListingTemplate") IsNot Nothing
     End Function
 #End Region
 End Class

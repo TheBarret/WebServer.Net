@@ -2,32 +2,35 @@
 Imports System.IO
 Imports System.Text
 Imports System.Threading
+Imports System.Collections.Specialized
 
 Public Class Client
+    Inherits Dictionary(Of String, String)
     Public Property Parent As Listener
     Public Property Handle As ManualResetEvent
-    Public Property Environment As VirtualHost
+    Public Property Config As VirtualHost
     Public Property Context As HttpListenerContext
     Sub New(Parent As Listener, Context As HttpListenerContext)
         Me.Parent = Parent
         Me.Context = Context
         Me.Handle = New ManualResetEvent(False)
-        If (Not Parent.TryGetConfig(Context.Request.Url.Host, Me.Environment)) Then
-            Me.SetStatus(HttpStatusCode.NotFound)
+        If (Not Parent.TryGetConfig(Context.Request.Url.Host, Me.Config)) Then
+            Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.NotFound)), "text/html", False)
         End If
     End Sub
     Public Sub Process()
         Try
             If (Me.Validated) Then
                 Me.Parent.Log(String.Format("[Request] {0} {1} {2} {3}", Me.RemoteEndPoint.ToString, Me.Host, Me.Method, Me.Context.Request.Url.AbsolutePath))
-                Me.Response.KeepAlive = Me.Environment.KeepAlive
+                Me.Response.KeepAlive = Me.Config.KeepAlive
                 Me.ValidateRequest(Me.GetLocalPath(Me.Context.Request.Url.AbsolutePath.Replace("/", "\")))
             End If
         Catch ex As Exception
             Me.Parent.ClientExceptionCaught(Me, ex)
-            Me.SetStatus(HttpStatusCode.InternalServerError)
+            Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.InternalServerError)), "text/html", False)
         Finally
-            Me.Stream.Close()
+            Me.OutputStream.Close()
+            Me.InputStream.Close()
             Me.Handle.Set()
             Me.Handle.Close()
         End Try
@@ -40,66 +43,76 @@ Public Class Client
                 Me.SendRequest(GZip.Compress(buffer), Me.Parent.GetContentType(Path.GetExtension(Filename)), File.GetLastWriteTime(Filename))
             End Using
         Else
-            Me.SetStatus(HttpStatusCode.Forbidden)
+            Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
         End If
     End Sub
     Public Sub PrepaireDirectory(Dir As String)
         Me.SendRequest(GZip.Compress(New Generator(Me).DirectoryList(Dir)), "text/html", DateTime.Now)
     End Sub
-    Public Sub PrepairCustom(Value As String, ContentType As String)
-        Me.SendRequest(GZip.Compress(Me.Environment.Encoder.GetBytes(Value)), ContentType, DateTime.Now)
+    Public Sub PrepairCustom(Value As Byte(), ContentType As String, SendOk As Boolean)
+        Me.SendRequest(GZip.Compress(Value), ContentType, DateTime.Now, SendOk)
     End Sub
-    Public Sub SetStatus(StatusCode As HttpStatusCode)
+    Public Sub PrepairCustom(Value As String, ContentType As String, SendOk As Boolean)
+        Me.SendRequest(GZip.Compress(Me.Config.Encoder.GetBytes(Value)), ContentType, DateTime.Now, SendOk)
+    End Sub
+    Public Function SetStatus(StatusCode As HttpStatusCode) As HttpStatusCode
         Me.Parent.Log(String.Format("[Response] {0}", StatusCode.ToString))
         Me.Response.StatusCode = StatusCode
-    End Sub
+        Return StatusCode
+    End Function
     Private Sub ValidateRequest(AbsolutePath As String)
-        If (Me.HasQueryVariables AndAlso (Not Me.IsValidQueryLength Or Not Me.IsValidQuerySizes)) Then
-            Me.SetStatus(HttpStatusCode.MethodNotAllowed)
-        Else
-            If (Directory.Exists(AbsolutePath) Or File.Exists(AbsolutePath)) Then
-                If (Not Me.IsIllegalPath(AbsolutePath)) Then
-                    If (File.GetAttributes(AbsolutePath) = FileAttributes.Directory) Then
-                        If (Me.HasIndexPage(AbsolutePath)) Then
-                            Me.PrepaireFile(AbsolutePath)
-                        Else
-                            If (Me.Environment.AllowDirListing) Then
-                                Me.PrepaireDirectory(AbsolutePath)
-                            Else
-                                Me.SetStatus(HttpStatusCode.Forbidden)
-                            End If
-                        End If
-                    Else
-                        Me.PrepaireFile(AbsolutePath)
-                    End If
-                Else
-                    Me.SetStatus(HttpStatusCode.Forbidden)
-                End If
-            Else
-                Me.SetStatus(HttpStatusCode.NotFound)
+        If (Me.HasGetData) Then
+            If (Not Me.GetVariables(DataType.GET, Me)) Then
+                Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.MethodNotAllowed)), "text/html", False)
+                Return
             End If
         End If
+        If (Me.HasPostData) Then
+            If (Not Me.GetVariables(DataType.POST, Me)) Then
+                Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.MethodNotAllowed)), "text/html", False)
+                Return
+            End If
+        End If
+        If (Directory.Exists(AbsolutePath) Or File.Exists(AbsolutePath)) Then
+            If (Not Me.IsIllegalPath(AbsolutePath)) Then
+                If (File.GetAttributes(AbsolutePath) = FileAttributes.Directory) Then
+                    If (Me.HasIndexPage(AbsolutePath)) Then
+                        Me.PrepaireFile(AbsolutePath)
+                    Else
+                        If (Me.Config.AllowDirListing) Then
+                            Me.PrepaireDirectory(AbsolutePath)
+                        Else
+                            Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
+                        End If
+                    End If
+                Else
+                    Me.PrepaireFile(AbsolutePath)
+                End If
+            Else
+                Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
+            End If
+        Else
+            Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.NotFound)), "text/html", False)
+        End If
     End Sub
-    Public Sub SendRequest(Buffer() As Byte, ContentType As String, LastModified As DateTime)
-        Me.SetStatus(HttpStatusCode.OK)
-        With Me.Context
-            .Response.ContentType = ContentType
-            .Response.ContentLength64 = Buffer.Length
-            For Each entry As KeyValuePair(Of String, String) In Me.Environment.Headers
-                .Response.AddHeader(entry.Key, entry.Value)
-            Next
-            .Response.AddHeader("Content-Encoding", "gzip")
-            .Response.AddHeader("Keep-Alive", Me.Environment.KeepAlive.ToString)
-            .Response.AddHeader("Accept-Charset", Me.Environment.Encoder.BodyName)
-            .Response.AddHeader("Date", DateTime.Now.ToString("r"))
-            .Response.AddHeader("Last-Modified", LastModified.ToString("r"))
-            .Response.OutputStream.Write(Buffer, 0, Buffer.Length)
-            .Response.OutputStream.Flush()
-        End With
+    Public Sub SendRequest(Buffer() As Byte, ContentType As String, LastModified As DateTime, Optional SendOk As Boolean = True)
+        If (SendOk) Then Me.SetStatus(HttpStatusCode.OK)
+        Me.Response.ContentType = ContentType
+        Me.Response.ContentLength64 = Buffer.Length
+        For Each entry As KeyValuePair(Of String, String) In Me.Config.Headers
+            Me.Response.AddHeader(entry.Key, entry.Value)
+        Next
+        Me.Response.AddHeader("Content-Encoding", "gzip")
+        Me.Response.AddHeader("Keep-Alive", Me.Config.KeepAlive.ToString)
+        Me.Response.AddHeader("Accept-Charset", Me.Config.Encoder.BodyName)
+        Me.Response.AddHeader("Date", DateTime.Now.ToString("r"))
+        Me.Response.AddHeader("Last-Modified", LastModified.ToString("r"))
+        Me.Response.OutputStream.Write(Buffer, 0, Buffer.Length)
+        Me.Response.OutputStream.Flush()
     End Sub
     Public Function HasIndexPage(ByRef AbsolutePath As String) As Boolean
         For Each entry As String In Directory.GetFiles(AbsolutePath)
-            If (Me.Environment.DefaultIndexPages.Contains(Path.GetFileName(entry).ToLower)) Then
+            If (Me.Config.DefaultIndexPages.Contains(Path.GetFileName(entry).ToLower)) Then
                 AbsolutePath = entry
                 Return True
             End If
@@ -107,7 +120,7 @@ Public Class Client
         Return False
     End Function
     Public Function IsHiddenFileType(AbsolutePath As String) As Boolean
-        For Each entry As String In Me.Environment.HiddenFileTypes
+        For Each entry As String In Me.Config.HiddenFileTypes
             If (Path.GetFileName(AbsolutePath) Like entry) Then
                 Return True
             End If
@@ -115,25 +128,45 @@ Public Class Client
         Return False
     End Function
     Public Function IsIllegalPath(AbsolutePath As String) As Boolean
-        For Each entry As String In Me.Environment.IllegalPathChars
+        For Each entry As String In Me.Config.IllegalPathChars
             If (AbsolutePath Like entry) Then
                 Return True
             End If
         Next
         Return False
     End Function
-    Public Function HasQueryVariables() As Boolean
-        Return Me.Context.Request.QueryString.Count > 0
+    Public Function HasPostData() As Boolean
+        Return Me.Method.ToLower.Equals("post")
     End Function
-    Public Function IsValidQueryLength() As Boolean
-        Return Me.Context.Request.QueryString.Count < Me.Environment.MaxQueryLength
+    Public Function HasGetData() As Boolean
+        Return Me.Method.ToLower.Equals("get") AndAlso Me.Context.Request.QueryString.Count > 0
     End Function
-    Public Function IsValidQuerySizes() As Boolean
-        For Each var As String In Me.Context.Request.QueryString
-            If (Me.Context.Request.QueryString.Item(var).Length > Me.Environment.MaxQuerySize) Then
-                Return False
+    Public Function GetVariables(Type As DataType, ByRef Collection As Dictionary(Of String, String)) As Boolean
+        If (Type = DataType.GET) Then
+            Dim count As Integer = 0
+            If (Me.Context.Request.QueryString.Count > 0) Then
+                For Each pair As KeyValuePair(Of String, String) In Me.Query.ToDictionary(Me.Request)
+                    If (count > Me.Config.MaxQueryLength) Then
+                        Return False
+                    ElseIf (pair.Value.Length > Me.Config.MaxQuerySize) Then
+                        Return False
+                    End If
+                    Collection.Add(pair.Key, pair.Value)
+                    count += 1
+                Next
             End If
-        Next
+        ElseIf (Type = DataType.POST) Then
+            Dim count As Integer = 0
+            For Each pair As KeyValuePair(Of String, String) In Me.InputStream.ToDictionary
+                If (count > Me.Config.MaxQueryLength) Then
+                    Return False
+                ElseIf (pair.Value.Length > Me.Config.MaxQuerySize) Then
+                    Return False
+                End If
+                Collection.Add(pair.Key, pair.Value)
+                count += 1
+            Next
+        End If
         Return True
     End Function
     Public ReadOnly Property UserAgent As String
@@ -171,25 +204,45 @@ Public Class Client
             Return Me.Context.Response
         End Get
     End Property
-    Public ReadOnly Property Stream As Stream
+    Public ReadOnly Property Request As HttpListenerRequest
+        Get
+            Return Me.Context.Request
+        End Get
+    End Property
+    Public ReadOnly Property Query As NameValueCollection
+        Get
+            Return Me.Context.Request.QueryString
+        End Get
+    End Property
+    Public ReadOnly Property OutputStream As Stream
         Get
             Return Me.Context.Response.OutputStream
         End Get
     End Property
+    Public ReadOnly Property InputStream As Stream
+        Get
+            Return Me.Context.Request.InputStream
+        End Get
+    End Property
     Public ReadOnly Property Validated As Boolean
         Get
-            Return Me.Environment IsNot Nothing
+            Return Me.Config IsNot Nothing
         End Get
     End Property
     Public ReadOnly Property GetLocalPath(ParamArray Combine() As String) As String
         Get
-            Return Path.GetFullPath(String.Format("{0}\{1}", Me.Environment.DocumentRoot.FullName, String.Join("\", Combine)))
+            Return Path.GetFullPath(String.Format("{0}\{1}", Me.Config.DocumentRoot.FullName, String.Join("\", Combine)))
         End Get
     End Property
     Public ReadOnly Property GetRelativePath(Filename As String) As String
         Get
             Dim path As String = New Uri(Filename).AbsolutePath, absolute As New DirectoryInfo(Me.GetLocalPath)
             Return path.Substring(path.IndexOf(absolute.Name) + absolute.Name.Length)
+        End Get
+    End Property
+    Public ReadOnly Property GetErrorPage(errorcode As HttpStatusCode) As Byte()
+        Get
+            Return Me.Config.Encoder.GetBytes(String.Format(Me.Config.ErrorPage.Trim, CType(errorcode, Int32), errorcode.ToString))
         End Get
     End Property
 End Class
