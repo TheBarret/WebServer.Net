@@ -11,10 +11,10 @@
 	
 		<!-- Custom Headers -->
 		<Headers>
-			Accept 		= */*
+			Accept 			= */*
 			Accept-Language = en-US
 			Cache-Control	= no-cache
-			Pragma		= no-cache
+			Pragma			= no-cache
 		</Headers>
 		
 		<!-- Look for these index files -->
@@ -25,7 +25,7 @@
 		
 		<!-- Illegal path characters -->
 		<IllegalPathChars>
-			*..*
+			*\..\*
 		</IllegalPathChars>
 		
 		<!-- Hide directories and files beginning with a dot -->
@@ -41,10 +41,10 @@
 			*.conf
 		</HiddenFileTypes>
 		
-		<!-- Maximum GET qeury length per request -->
+		<!-- Maximum GET/POST qeury length per request -->
 		<MaxQueryLength>255</MaxQueryLength>
 		
-		<!-- Maximum GET variable size per query -->
+		<!-- Maximum GET/POST variable size per query -->
 		<MaxQueryVariableSize>255</MaxQueryVariableSize>
 		
 		<!-- Allow users to browse directories -->
@@ -52,6 +52,26 @@
 		
 		<!-- Directory Listing Template -->
 		<DirectoryListingTemplate>template.xml</DirectoryListingTemplate>
+		
+		<!-- 
+			Custom Error Page 
+			{0} = Error id
+			{1} = Error tag
+		-->
+		<ErrorPage>
+			<![CDATA[
+				<html>
+					<head>
+						<title>Error {0}</title>
+					</head>
+					<body>
+						<div align="center">
+							<h1>Error {0} ({1})</h1>
+						</div>
+					</body>
+				</html>
+			]]>
+		</ErrorPage>
 		
 	</VirtualHost>
 	
