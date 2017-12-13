@@ -1,4 +1,4 @@
-# WebServer.Net
+# Lightweight Webserver
 .Net (HTTP API 2.0) based webserver
 
 
