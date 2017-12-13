@@ -5,12 +5,13 @@
         Console.WindowWidth = 60
         Console.WindowHeight = 20
         Console.WriteLine("Loading server...")
-        Dim listener As Listener = listener.Load(".\config.xml")
-        AddHandler listener.StatusChange, AddressOf ListenerStatus
-        AddHandler listener.ServerHeartBeat, AddressOf ListenerHeartBeat
-        AddHandler listener.ExceptionCaught, AddressOf ListenerException
-        AddHandler listener.ServerMessage, AddressOf ListenerMessage
+        Dim listener As Listener = Nothing
         Try
+            listener = listener.Load(".\config.xml")
+            AddHandler listener.StatusChange, AddressOf ListenerStatus
+            AddHandler listener.ServerHeartBeat, AddressOf ListenerHeartBeat
+            AddHandler listener.ExceptionCaught, AddressOf ListenerException
+            AddHandler listener.ServerMessage, AddressOf ListenerMessage
             For Each vhost In listener.VirtualHosts
                 Console.WriteLine("-> Found: {0}", vhost.Prefix)
             Next

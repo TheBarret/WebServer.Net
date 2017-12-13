@@ -1,4 +1,12 @@
-﻿Public Enum DataType
-    [GET] = 0
-    [POST] = 1
+﻿Public Enum ElementType
+    Undefined = 0
+    Body
+    Folders
+    Files
+    Readme
+    ReadmeTag
+End Enum
+Public Enum DataType
+    VARGET = 0
+    VARPOST
 End Enum

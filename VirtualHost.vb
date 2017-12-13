@@ -46,11 +46,11 @@ Public Class VirtualHost
     Public Property Prefix As String
     Public Property Encoder As Encoding
     Public Property KeepAlive As Boolean
-    Public Property ErrorPage As String
     Public Property DocumentRoot As DirectoryInfo
     Public Property MaxQuerySize As Integer = 255
     Public Property MaxQueryLength As Integer = 255
     Public Property DirectoryTemplate As String
+    Public Property ErrorPageTemplate As String
     Public Property HiddenFileTypes As List(Of String)
     Public Property IllegalPathChars As List(Of String)
     Public Property DefaultIndexPages As List(Of String)

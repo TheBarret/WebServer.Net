@@ -1,5 +1,6 @@
 ﻿Imports System.Net
 Imports System.Threading
+Imports System.Security.Authentication.ExtendedProtection
 
 Public Class Listener
     Inherits Config

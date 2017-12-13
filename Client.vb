@@ -46,8 +46,8 @@ Public Class Client
             Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
         End If
     End Sub
-    Public Sub PrepaireDirectory(Dir As String)
-        Me.SendRequest(GZip.Compress(New Generator(Me).DirectoryList(Dir)), "text/html", DateTime.Now)
+    Public Sub PrepaireDirectory(dir As String)
+        Me.SendRequest(GZip.Compress(Me.GetDirectoryPage(dir)), "text/html", DateTime.Now)
     End Sub
     Public Sub PrepairCustom(Value As Byte(), ContentType As String, SendOk As Boolean)
         Me.SendRequest(GZip.Compress(Value), ContentType, DateTime.Now, SendOk)
@@ -62,13 +62,13 @@ Public Class Client
     End Function
     Private Sub ValidateRequest(AbsolutePath As String)
         If (Me.HasGetData) Then
-            If (Not Me.GetVariables(DataType.GET, Me)) Then
+            If (Not Me.GetVariables(DataType.VARGET, Me)) Then
                 Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.MethodNotAllowed)), "text/html", False)
                 Return
             End If
         End If
         If (Me.HasPostData) Then
-            If (Not Me.GetVariables(DataType.POST, Me)) Then
+            If (Not Me.GetVariables(DataType.VARPOST, Me)) Then
                 Me.PrepairCustom(Me.GetErrorPage(Me.SetStatus(HttpStatusCode.MethodNotAllowed)), "text/html", False)
                 Return
             End If
@@ -142,7 +142,7 @@ Public Class Client
         Return Me.Method.ToLower.Equals("get") AndAlso Me.Context.Request.QueryString.Count > 0
     End Function
     Public Function GetVariables(Type As DataType, ByRef Collection As Dictionary(Of String, String)) As Boolean
-        If (Type = DataType.GET) Then
+        If (Type = DataType.VARGET) Then
             Dim count As Integer = 0
             If (Me.Context.Request.QueryString.Count > 0) Then
                 For Each pair As KeyValuePair(Of String, String) In Me.Query.ToDictionary(Me.Request)
@@ -155,7 +155,7 @@ Public Class Client
                     count += 1
                 Next
             End If
-        ElseIf (Type = DataType.POST) Then
+        ElseIf (Type = DataType.VARPOST) Then
             Dim count As Integer = 0
             For Each pair As KeyValuePair(Of String, String) In Me.InputStream.ToDictionary
                 If (count > Me.Config.MaxQueryLength) Then
@@ -242,7 +242,12 @@ Public Class Client
     End Property
     Public ReadOnly Property GetErrorPage(errorcode As HttpStatusCode) As Byte()
         Get
-            Return Me.Config.Encoder.GetBytes(String.Format(Me.Config.ErrorPage.Trim, CType(errorcode, Int32), errorcode.ToString))
+            Return New Generator(Me).ErrorPage(errorcode)
+        End Get
+    End Property
+    Public ReadOnly Property GetDirectoryPage(dir As String) As Byte()
+        Get
+            Return New Generator(Me).DirectoryPage(dir)
         End Get
     End Property
 End Class

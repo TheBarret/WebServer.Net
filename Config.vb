@@ -97,11 +97,13 @@ Public MustInherit Class Config
                                 Integer.TryParse(node.SelectSingleNode("MaxQueryLength").InnerText, vhost.MaxQueryLength)
                                 Integer.TryParse(node.SelectSingleNode("MaxQueryVariableSize").InnerText, vhost.MaxQuerySize)
                                 Boolean.TryParse(node.SelectSingleNode("AllowDirListing").InnerText, vhost.AllowDirListing)
-                                vhost.ErrorPage = node.SelectSingleNode("ErrorPage").InnerText
+                                vhost.ErrorPageTemplate = node.SelectSingleNode("ErrorPageTemplate").InnerText
                                 vhost.DirectoryTemplate = node.SelectSingleNode("DirectoryListingTemplate").InnerText
                                 vhost.IllegalPathChars = VirtualHost.Parse(node.SelectSingleNode("IllegalPathChars").InnerText)
                                 listener.VirtualHosts.Add(vhost)
                             Next
+                        Else
+                            Throw New Exception("incomplete virtualhost config entry")
                         End If
                         Return listener
                     Else
@@ -110,8 +112,9 @@ Public MustInherit Class Config
                 Else
                     Throw New Exception("could not create server")
                 End If
+            Else
+                Throw New Exception("invalid xml config")
             End If
-            Throw New Exception("config structure invalid")
         End If
         Throw New IOException("config file not found")
     End Function
@@ -174,7 +177,7 @@ Public MustInherit Class Config
                node.SelectSingleNode("AllowDirListing") IsNot Nothing AndAlso
                node.SelectSingleNode("HideDotNames") IsNot Nothing AndAlso
                node.SelectSingleNode("IllegalPathChars") IsNot Nothing AndAlso
-               node.SelectSingleNode("ErrorPage") IsNot Nothing AndAlso
+               node.SelectSingleNode("ErrorPageTemplate") IsNot Nothing AndAlso
                node.SelectSingleNode("DirectoryListingTemplate") IsNot Nothing
     End Function
 #End Region
