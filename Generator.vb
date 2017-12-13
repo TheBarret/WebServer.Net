@@ -18,9 +18,9 @@ Public Class Generator
                 document.Load(fs)
             End Using
             If (Generator.HasDefinedTemplate(document)) Then
-                base = document.GetElementsByTagName("Templates").Cast(Of XmlElement)().First
+                base = Me.GetElement(document, "Templates")
                 If (Generator.HasDefinedErrorTemplate(base)) Then
-                    base = document.GetElementsByTagName("ErrorTemplate").Cast(Of XmlElement)().First
+                    base = Me.GetElement(document, "ErrorTemplate")
                     '// Generate body
                     If (Generator.HasDefinedBody(base)) Then
                         Me.Elements.Add(ElementType.Body, base.SelectSingleNode("Body").InnerText.Trim)
@@ -40,12 +40,12 @@ Public Class Generator
                 document.Load(fs)
             End Using
             If (Generator.HasDefinedTemplate(document)) Then
-                base = document.GetElementsByTagName("Templates").Cast(Of XmlElement)().First
+                base = Me.GetElement(document, "Templates")
                 If (Generator.HasDefinedDirTemplate(base)) Then
-                    base = document.GetElementsByTagName("DirectoryTemplate").Cast(Of XmlElement)().First
+                    base = Me.GetElement(base, "DirectoryTemplate")
                     '// Readme.md Support
                     If (Generator.HasDefinedReadMe(base)) Then
-                        Dim readme As XmlElement = base.GetElementsByTagName("Readme").Cast(Of XmlElement)().First
+                        Dim readme As XmlElement = Me.GetElement(base, "Readme")
                         Me.Elements.Add(ElementType.Readme, readme.GetAttribute("Filename"))
                         Me.Elements.Add(ElementType.ReadmeTag, readme.InnerText.Trim)
                     End If
@@ -84,6 +84,18 @@ Public Class Generator
             End If
         End If
         Return Me.ToArray
+    End Function
+    ''' <summary>
+    ''' Cast the first XML element by reference
+    ''' </summary>
+    Private Function GetElement(node As XmlDocument, Reference As String) As XmlElement
+        Return node.GetElementsByTagName(Reference).Cast(Of XmlElement)().First
+    End Function
+    ''' <summary>
+    ''' Cast the first XML element by reference
+    ''' </summary>
+    Private Function GetElement(node As XmlElement, Reference As String) As XmlElement
+        Return node.GetElementsByTagName(Reference).Cast(Of XmlElement)().First
     End Function
     ''' <summary>
     ''' Validates XML document
