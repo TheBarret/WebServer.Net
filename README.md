@@ -11,6 +11,7 @@ Features:
 - Custom Error Page
 - Readme.md embedding
 - GET/POST Handling
+- Plugin Support
 - Easy XML Configuration
 
 
