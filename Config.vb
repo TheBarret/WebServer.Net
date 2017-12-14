@@ -67,7 +67,7 @@ Public MustInherit Class Config
         End Get
     End Property
     ''' <summary>
-    ''' Returns true if config has a valid base path and supported listener
+    ''' Returns true if config has a valid base path
     ''' </summary>
     Public ReadOnly Property Validated As Boolean
         Get
