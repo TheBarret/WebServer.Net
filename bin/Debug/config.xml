@@ -9,15 +9,15 @@
 	-->
 	<VirtualHost Base="\localhost" Prefix="*:80" Encoding="UTF-8" KeepAlive="True">
         
-        <!-- Localization -->
-        <Culture>en-US</Culture>
+        	<!-- Localization -->
+        	<Culture>en-US</Culture>
         
 		<!-- Custom Headers -->
 		<CustomHeaders>
 			Content-Security-Policy = default-src 'self'; script-src 'self';
 		</CustomHeaders>
 		
-        <!-- Default Index Pages -->
+        	<!-- Default Index Pages -->
 		<DefaultIndexPages>
 			index.htm
 			index.html
@@ -25,7 +25,7 @@
 		
 		<!-- Illegal path characters -->
 		<IllegalPathChars>
-            *\..\*
+            		*\..\*
 		</IllegalPathChars>
 		
 		<!-- Hide directories and files beginning with a dot -->
@@ -46,7 +46,7 @@
 		
 		<!-- Maximum GET/POST variable size per query -->
 		<MaxQueryVariableSize>255</MaxQueryVariableSize>
-		
+	
 		<!-- Allow users to browse directories -->
 		<AllowDirListing>True</AllowDirListing>
 		
@@ -67,11 +67,11 @@
 		.md 		= text/plain
 		.css 		= text/css
 		.htm 		= text/html
-		.html 	    = text/html
-		.shtml 	    = text/html
+		.html 	    	= text/html
+		.shtml 	    	= text/html
 		.png 		= image/png
 		.gif 		= image/gif
-		.jpeg 	    = image/jpeg
+		.jpeg 	    	= image/jpeg
 		.jpg 		= image/jpeg
 		.ico 		= image/x-icon
 		.js 		= application/x-javascript
@@ -79,9 +79,9 @@
 		.rar 		= application/x-rar-compressed
 	</ContentType>
 	
-    <!-- Plugins -->
-    <Plugins>
-        ..\PluginExample.dll
-    </Plugins>
+    	<!-- Plugins -->
+    	<Plugins>
+        	..\PluginExample.dll
+    	</Plugins>
     
 </Config>
