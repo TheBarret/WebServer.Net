@@ -28,6 +28,7 @@ Public Class Client
                 Dim Claimed As Boolean = False
                 Me.Listener.Log(String.Format("[Request] {0} {1} {2} {3}", Me.RemoteEndPoint.ToString, Me.Host, Me.Method, Me.Context.Request.Url.AbsolutePath))
                 Me.Response.KeepAlive = Me.Config.KeepAlive
+                Me.StoreUserData()
                 Me.Listener.PluginEventRequest(Me, Claimed)
                 If (Not Claimed) Then
                     Me.ValidateRequest(Me.LocalPath(Me.Context.Request.Url.AbsolutePath.Replace("/", "\")))
@@ -69,7 +70,7 @@ Public Class Client
         Me.Response.StatusCode = StatusCode
         Return StatusCode
     End Function
-    Private Sub StoreData()
+    Private Sub StoreUserData()
         If (Me.HasGetData) Then
             If (Not Me.GetData(DataType.VARGET, Me.Data)) Then
                 Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.MethodNotAllowed)), "text/html", False)
@@ -169,7 +170,7 @@ Public Class Client
         Return False
     End Function
     Public Function HasPostData() As Boolean
-        Return Me.Method.ToLower.Equals("post")
+        Return Me.Method.ToLower.Equals("post") AndAlso Me.InputStream.Length > 0
     End Function
     Public Function HasGetData() As Boolean
         Return Me.Method.ToLower.Equals("get") AndAlso Me.Context.Request.QueryString.Count > 0
