@@ -8,16 +8,16 @@
 		Prefix	: hostname : port
 	-->
 	<VirtualHost Base="\localhost" Prefix="*:80" Encoding="UTF-8" KeepAlive="True">
-	
+        
+        <!-- Localization -->
+        <Culture>en-US</Culture>
+        
 		<!-- Custom Headers -->
-		<Headers>
-			Accept 		= */*
-			Accept-Language = en-US
-			Cache-Control	= no-cache
-			Pragma		= no-cache
-		</Headers>
+		<CustomHeaders>
+			Content-Security-Policy = default-src 'self'; script-src 'self';
+		</CustomHeaders>
 		
-		<!-- Look for these index files -->
+        <!-- Default Index Pages -->
 		<DefaultIndexPages>
 			index.htm
 			index.html
@@ -25,7 +25,7 @@
 		
 		<!-- Illegal path characters -->
 		<IllegalPathChars>
-			*\..\*
+            *\..\*
 		</IllegalPathChars>
 		
 		<!-- Hide directories and files beginning with a dot -->
@@ -63,20 +63,25 @@
 	
 	<!-- Content Type Definitions -->
 	<ContentType>
-		.txt 	= text/plain
-		.md 	= text/plain
-		.css 	= text/css
-		.htm 	= text/html
-		.html 	= text/html
-		.shtml 	= text/html
-		.png 	= image/png
-		.gif 	= image/gif
-		.jpeg 	= image/jpeg
-		.jpg 	= image/jpeg
-		.ico 	= image/x-icon
-		.js 	= application/x-javascript
-		.zip 	= application/zip
-		.rar 	= application/x-rar-compressed
+		.txt 		= text/plain
+		.md 		= text/plain
+		.css 		= text/css
+		.htm 		= text/html
+		.html 	    = text/html
+		.shtml 	    = text/html
+		.png 		= image/png
+		.gif 		= image/gif
+		.jpeg 	    = image/jpeg
+		.jpg 		= image/jpeg
+		.ico 		= image/x-icon
+		.js 		= application/x-javascript
+		.zip 		= application/zip
+		.rar 		= application/x-rar-compressed
 	</ContentType>
 	
+    <!-- Plugins -->
+    <Plugins>
+        ..\PluginExample.dll
+    </Plugins>
+    
 </Config>
