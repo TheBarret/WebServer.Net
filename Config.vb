@@ -19,7 +19,7 @@ Public MustInherit Class Config
     ''' Initializes the config class and returns true if its valid and supported
     ''' </summary>
     Public Function Initialize(BasePath As String) As Boolean
-        If (BasePath.Length > 0) Then
+        If (HttpListener.IsSupported AndAlso BasePath.Length > 0) Then
             Me.Plugins = New List(Of IPlugin)
             Me.VirtualHosts = New List(Of VirtualHost)
             Me.ContentTypes = New Dictionary(Of String, String)
@@ -71,7 +71,7 @@ Public MustInherit Class Config
     ''' </summary>
     Public ReadOnly Property Validated As Boolean
         Get
-            Return Me.BasePath IsNot Nothing AndAlso Me.BasePath.Exists AndAlso HttpListener.IsSupported
+            Return Me.BasePath IsNot Nothing AndAlso Me.BasePath.Exists
         End Get
     End Property
 #End Region
