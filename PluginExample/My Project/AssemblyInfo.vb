@@ -8,17 +8,17 @@ Imports System.Runtime.InteropServices
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("Lightweight Webserver")> 
+<Assembly: AssemblyTitle("Plugin Example")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("Lightweight Webserver")> 
+<Assembly: AssemblyProduct("Plugin Example")> 
 <Assembly: AssemblyCopyright("Copyright © Barret 2017")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)>
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
-<Assembly: Guid("d249b09c-f358-4031-8a18-8eb39553e71d")> 
+<Assembly: Guid("50b9b870-6926-422f-8897-fadc2d84f5ee")> 
 
 ' Version information for an assembly consists of the following four values:
 '

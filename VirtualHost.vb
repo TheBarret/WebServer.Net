@@ -1,11 +1,13 @@
 ﻿Imports System.IO
 Imports System.Text
+Imports System.Globalization
 
 Public Class VirtualHost
 #Region "Constructors"
     Sub New(Parent As Config, DocumentRoot As String, Prefix As String, Encoder As String)
         Me.Parent = Parent
         Me.Prefix = Prefix
+        Me.Culture = New CultureInfo("en-US")
         Me.Encoder = Encoding.GetEncoding(Encoder)
         Me.HiddenFileTypes = New List(Of String)
         Me.DefaultIndexPages = New List(Of String)
@@ -15,6 +17,9 @@ Public Class VirtualHost
     End Sub
 #End Region
 #Region "Shared"
+    ''' <summary>
+    ''' Parses a string with CRLF as delimiter and returns a List(Of T)
+    ''' </summary>
     Public Shared Function Parse(value As String) As List(Of String)
         Dim collection As New List(Of String)
         For Each line As String In Strings.Split(value, Environment.NewLine)
@@ -46,6 +51,7 @@ Public Class VirtualHost
     Public Property Prefix As String
     Public Property Encoder As Encoding
     Public Property KeepAlive As Boolean
+    Public Property Culture As CultureInfo
     Public Property DocumentRoot As DirectoryInfo
     Public Property MaxQuerySize As Integer = 255
     Public Property MaxQueryLength As Integer = 255

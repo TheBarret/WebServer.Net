@@ -11,10 +11,10 @@ Public Class Generator
         Me.Client = Client
         Me.Elements = New Dictionary(Of ElementType, String)
     End Sub
-    Public Function ErrorPage(errorcode As HttpStatusCode) As Byte()
-        If (File.Exists(Me.Client.GetLocalPath(Me.Client.Config.ErrorPageTemplate))) Then
+    Public Function ErrorPage(StatusCode As HttpStatusCode) As Byte()
+        If (File.Exists(Me.Client.LocalPath(Me.Client.Config.ErrorPageTemplate))) Then
             Dim document As New XmlDocument, base As XmlElement
-            Using fs As New FileStream(Me.Client.GetLocalPath(Me.Client.Config.ErrorPageTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
+            Using fs As New FileStream(Me.Client.LocalPath(Me.Client.Config.ErrorPageTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
                 document.Load(fs)
             End Using
             If (Generator.HasDefinedTemplate(document)) Then
@@ -24,9 +24,9 @@ Public Class Generator
                     '// Generate body
                     If (Generator.HasDefinedBody(base)) Then
                         Me.Elements.Add(ElementType.Body, base.SelectSingleNode("Body").InnerText.Trim)
-                        Me.Elements(ElementType.Body) = Me.Elements(ElementType.Body).Replace("{0}", CType(errorcode, Int32).ToString)
-                        Me.Elements(ElementType.Body) = Me.Elements(ElementType.Body).Replace("{1}", errorcode.ToString)
-                        Me.AddRange(Me.Client.Config.Encoder.GetBytes(Me.Elements(ElementType.Body)))
+                        Me.Elements(ElementType.Body) = Me.Elements(ElementType.Body).Replace("{0}", CType(StatusCode, Int32).ToString)
+                        Me.Elements(ElementType.Body) = Me.Elements(ElementType.Body).Replace("{1}", StatusCode.ToString)
+                        Me.AddRange(Me.Client.Encoding.GetBytes(Me.Elements(ElementType.Body)))
                     End If
                 End If
             End If
@@ -34,9 +34,9 @@ Public Class Generator
         Return Me.ToArray
     End Function
     Public Function DirectoryPage(Dir As String) As Byte()
-        If (File.Exists(Me.Client.GetLocalPath(Me.Client.Config.DirectoryTemplate)) AndAlso Directory.Exists(Dir)) Then
-            Dim document As New XmlDocument, base As XmlElement, address As String = Me.Client.GetRelativePath(Dir)
-            Using fs As New FileStream(Me.Client.GetLocalPath(Me.Client.Config.DirectoryTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
+        If (File.Exists(Me.Client.LocalPath(Me.Client.Config.DirectoryTemplate)) AndAlso Directory.Exists(Dir)) Then
+            Dim document As New XmlDocument, base As XmlElement, relativeAddress As String = Me.Client.RelativePath(Dir)
+            Using fs As New FileStream(Me.Client.LocalPath(Me.Client.Config.DirectoryTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
                 document.Load(fs)
             End Using
             If (Generator.HasDefinedTemplate(document)) Then
@@ -52,7 +52,7 @@ Public Class Generator
                     '// Generate body
                     If (Generator.HasDefinedBody(base) And Generator.HasDefinedFolder(base) And Generator.HasDefinedFile(base)) Then
                         Dim output As New List(Of String)
-                        Me.Elements.Add(ElementType.Body, base.SelectSingleNode("Body").InnerText.Trim.Replace("{LOCATION}", address))
+                        Me.Elements.Add(ElementType.Body, base.SelectSingleNode("Body").InnerText.Trim.Replace("{LOCATION}", relativeAddress))
                         Me.Elements.Add(ElementType.Folders, base.SelectSingleNode("Folders").InnerText.Trim)
                         Me.Elements.Add(ElementType.Files, base.SelectSingleNode("Files").InnerText.Trim)
                         For Each d As String In Directory.GetDirectories(Dir)
@@ -60,7 +60,7 @@ Public Class Generator
                             If (Me.Client.Config.HideDotNames And current.Name.StartsWith(".")) Then
                                 Continue For
                             End If
-                            output.Add(String.Format(Me.Elements(ElementType.Folders), address, current.Name, current.LastWriteTime.ToString("r")))
+                            output.Add(String.Format(Me.Elements(ElementType.Folders), relativeAddress, current.Name, current.LastWriteTime.ToString("r")))
                         Next
                         For Each f As String In Directory.GetFiles(Dir)
                             Dim current As New FileInfo(f)
@@ -73,12 +73,12 @@ Public Class Generator
                                         Me.Elements(ElementType.Body) = Me.Elements(ElementType.Body).Replace(Me.Elements(ElementType.ReadmeTag), sr.ReadToEnd)
                                     End Using
                                 End If
-                                output.Add(String.Format(Me.Elements(ElementType.Files), address, current.Name, current.LastWriteTime.ToString("r"), current.Length.HumanReadable))
+                                output.Add(String.Format(Me.Elements(ElementType.Files), relativeAddress, current.Name, current.LastWriteTime.ToString("r"), current.Length.HumanReadable))
                             End If
                         Next
 
                         '// Append to byte array
-                        Me.AddRange(Me.Client.Config.Encoder.GetBytes(Me.Elements(ElementType.Body).Replace("{TABLE}", String.Join(Environment.NewLine, output))))
+                        Me.AddRange(Me.Client.Encoding.GetBytes(Me.Elements(ElementType.Body).Replace("{TABLE}", String.Join(Environment.NewLine, output))))
                     End If
                 End If
             End If

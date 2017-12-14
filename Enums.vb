@@ -1,4 +1,8 @@
-﻿Public Enum ElementType
+﻿Public Enum PluginRunMode
+    Load
+    Request
+End Enum
+Public Enum ElementType
     Undefined = 0
     Body
     Folders

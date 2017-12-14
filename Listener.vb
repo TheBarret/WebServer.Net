@@ -1,15 +1,15 @@
 ﻿Imports System.Net
 Imports System.Threading
-Imports System.Security.Authentication.ExtendedProtection
+Imports Webserver.Plugins
 
 Public Class Listener
     Inherits Config
     Public Property Running As Boolean
     Public Property Handle As ManualResetEvent
-    Protected Property Timer As Stopwatch
-    Protected Property Queue As Queue(Of Client)
-    Protected Property HttpListener As HttpListener
-    Public Event ServerHeartBeat(time As TimeSpan)
+    Public Property Timer As Stopwatch
+    Public Property Queue As Queue(Of Client)
+    Public Property HttpListener As HttpListener
+    Public Event ServerHeartBeat(latency As TimeSpan)
     Public Event ServerMessage(Message As String)
     Public Event StatusChange(Running As Boolean)
     Public Event ExceptionCaught(sender As Object, ex As Exception)
@@ -33,6 +33,21 @@ Public Class Listener
     Public Sub ClientExceptionCaught(sender As Object, ex As Exception)
         RaiseEvent ExceptionCaught(sender, ex)
     End Sub
+    Public Sub PluginEventInitialize()
+        For Each plugin As IPlugin In Me.Plugins
+            plugin.Load()
+        Next
+    End Sub
+    Public Sub PluginEventRequest(client As Client, ByRef Claimed As Boolean)
+        For Each plugin As IPlugin In Me.Plugins
+            plugin.ClientRequest(client, Claimed)
+        Next
+    End Sub
+    Public Sub PluginEventSend(client As Client, ByRef buffer() As Byte, ByRef ContentType As String)
+        For Each plugin As IPlugin In Me.Plugins
+            plugin.ClientSend(client, buffer, ContentType)
+        Next
+    End Sub
     Private Sub Worker()
         If (Me.Running) Then
             Me.Running = False
@@ -44,6 +59,7 @@ Public Class Listener
         Me.HttpListener = Listener.Create(Me.VirtualHosts)
         Me.HttpListener.Start()
         Me.HttpListener.BeginGetContext(AddressOf Me.ProcessIncomingRequest, Me.HttpListener)
+        Me.PluginEventInitialize()
         RaiseEvent StatusChange(True)
         Try
             Do
@@ -69,11 +85,13 @@ Public Class Listener
     End Sub
     Private Sub ProcessIncomingRequest(Result As IAsyncResult)
         Try
-            If (TypeOf Result.AsyncState Is HttpListener AndAlso Me.Running) Then
-                If (Not Result.IsCompleted) Then
-                    Result.AsyncWaitHandle.WaitOne()
+            If (TypeOf Result.AsyncState Is HttpListener) Then
+                If (Me.Running) Then
+                    If (Not Result.IsCompleted) Then
+                        Result.AsyncWaitHandle.WaitOne()
+                    End If
+                    Me.Queue.Enqueue(New Client(Me, CType(Result.AsyncState, HttpListener).EndGetContext(Result)))
                 End If
-                Me.Queue.Enqueue(New Client(Me, CType(Result.AsyncState, HttpListener).EndGetContext(Result)))
             Else
                 Throw New Exception("unable to handle request")
             End If

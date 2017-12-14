@@ -2,7 +2,7 @@
 
     Sub Main()
         Console.Title = "Webserver"
-        Console.WindowWidth = 60
+        Console.WindowWidth = 80
         Console.WindowHeight = 20
         Console.WriteLine("Loading server...")
         Dim listener As Listener = Nothing
@@ -21,18 +21,20 @@
         Catch ex As Exception
             ListenerException(Nothing, ex)
         Finally
-            listener.Shutdown()
-            RemoveHandler listener.StatusChange, AddressOf ListenerStatus
-            RemoveHandler listener.ServerHeartBeat, AddressOf ListenerHeartBeat
-            RemoveHandler listener.ExceptionCaught, AddressOf ListenerException
-            RemoveHandler listener.ServerMessage, AddressOf ListenerMessage
+            If (listener IsNot Nothing AndAlso listener.Running) Then
+                listener.Shutdown()
+                RemoveHandler listener.StatusChange, AddressOf ListenerStatus
+                RemoveHandler listener.ServerHeartBeat, AddressOf ListenerHeartBeat
+                RemoveHandler listener.ExceptionCaught, AddressOf ListenerException
+                RemoveHandler listener.ServerMessage, AddressOf ListenerMessage
+            End If
         End Try
     End Sub
     Private Sub ListenerStatus(Running As Boolean)
         Console.WriteLine("Server ready and listening")
     End Sub
-    Private Sub ListenerHeartBeat(time As TimeSpan)
-        Console.Title = String.Format("Webserver - {0}", time.ToString)
+    Private Sub ListenerHeartBeat(latency As TimeSpan)
+        Console.Title = String.Format("Webserver - {0}", latency.ToString)
     End Sub
     Private Sub ListenerMessage(Message As String)
         Console.WriteLine(Message)
