@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Rules Table -->
+<Rules>
+    <!-- 
+        IPV4 Loopback
+        <Rule Action="Allow">127.*</Rule>
+        
+        IPV6 Loopback
+        <Rule Action="Allow">::1</Rule>
+        
+        Local network
+        <Rule Action="Allow">192.168.178.*</Rule>
+                
+        Deny a single ip
+        <Rule Action="Deny">1.2.3.4</Rule>
+        
+        Deny a subnet
+        <Rule Action="Deny">1.2.3.*</Rule>
+        
+        Deny or allow all
+        <Rule Action="Allow">*</Rule>
+        <Rule Action="Deny">*</Rule>
+    -->
+    <Rule Action="Allow">*</Rule>
+</Rules>

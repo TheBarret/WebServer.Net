@@ -11,9 +11,10 @@
 	
 		<Body>
 		<![CDATA[
-			<html>
+			<html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
 				<head>
 					<title>Error {0}</title>
+                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 				</head>
 				<body>
 					<style>
@@ -28,7 +29,7 @@
                         h1 				    { color: #666; font-family: Terminal;
                                             font-weight: bolder; letter-spacing: 1px;
                                             font-size: 250%; background-color: inherit; }
-                        </style>
+                    </style>
 					<div align="center"><h1>Error {0} ({1})</h1><hr></div>
 				</body>
 			</html>
@@ -49,9 +50,10 @@
 		-->
 		<Body>
 		<![CDATA[
-			<html>
+			<html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
 			<head>
 				<title>Index of {LOCATION}</title>
+                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 			</head>
 			<body>
 				<style>
