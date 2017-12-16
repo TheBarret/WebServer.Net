@@ -5,6 +5,9 @@ Public Class Access
     ''' <summary>
     ''' Returns boolean if client can access this location if access config exists
     ''' </summary>
+    Public Shared Function Match(Client As Client, Base As String, Filename As String) As Boolean
+        Return Access.Match(Client, String.Format("{0}{1}", Base, Filename))
+    End Function
     Public Shared Function Match(Client As Client, Filename As String) As Boolean
         Dim rules As New Dictionary(Of String, TypeAccess)
         If (File.Exists(Filename)) Then

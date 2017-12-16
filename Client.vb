@@ -92,7 +92,7 @@ Public Class Client
     Private Sub ValidateRequest(AbsolutePath As String)
         AbsolutePath = WebUtility.UrlDecode(AbsolutePath)
         If (Me.HasAccessFile(AbsolutePath)) Then
-            If (Not Access.Match(Me, Me.LocalPath(Me.Settings.AccessFilename))) Then
+            If (Not Access.Match(Me, AbsolutePath, Me.Settings.AccessFilename)) Then
                 Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
                 Return
             End If
@@ -133,7 +133,7 @@ Public Class Client
     ''' Constructs headers and sends data to browser
     ''' </summary>
     Public Sub SendRequest(Buffer() As Byte, ContentType As String, LastModified As DateTime, Optional HttpStatusCodeOk As Boolean = True)
-       Try
+        Try
             Me.Listener.PluginEventSend(Me, Buffer, ContentType)
         Finally
             If (HttpStatusCodeOk) Then
