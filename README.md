@@ -13,6 +13,7 @@ Features:
 - GET/POST Handling
 - Plugin Support
 - Easy XML Configuration
+- Per directory access configurations
 
 
 Default Welcome Page
