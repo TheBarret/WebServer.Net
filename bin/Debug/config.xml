@@ -34,7 +34,7 @@
             Each entry needs to be on a new line
         -->
 		<IllegalPathChars>
-            *\..\*
+            		*\..\*
 		</IllegalPathChars>
 		
 		<!-- Hide directories and files beginning with a dot -->
@@ -101,13 +101,13 @@
 	<ContentType>
 		.txt 		= text/plain
 		.css 		= text/css
-        .md 		= text/html
+        	.md 		= text/html
 		.htm 		= text/html
-		.html 	    = text/html
-		.shtml 	    = text/html
+		.html		= text/html
+		.shtml 	    	= text/html
 		.png 		= image/png
 		.gif 		= image/gif
-		.jpeg 	    = image/jpeg
+		.jpeg 	    	= image/jpeg
 		.jpg 		= image/jpeg
 		.ico 		= image/x-icon
 		.js 		= application/x-javascript
