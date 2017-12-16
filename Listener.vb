@@ -16,38 +16,65 @@ Public Class Listener
     Sub New()
         Me.Queue = New Queue(Of Client)
     End Sub
+    ''' <summary>
+    ''' Starts server
+    ''' </summary>
     Public Sub Start()
         ThreadPool.SetMaxThreads(Me.Workers, Me.IOWorkers)
         Call New Thread(AddressOf Me.Worker) With {.IsBackground = True}.Start()
     End Sub
+    ''' <summary>
+    ''' Shutsdown server
+    ''' </summary>
     Public Sub Shutdown()
         Me.Running = False
     End Sub
+    ''' <summary>
+    ''' Tries to get the config settings for a requested hostname
+    ''' </summary>
     Public Function TryGetConfig(Address As String, ByRef VirtualHost As VirtualHost) As Boolean
-        VirtualHost = Me.VirtualHosts.Where(Function(vhost) vhost.Name.Equals(Address.ToLower) Or Address Like vhost.Name).SingleOrDefault
+        VirtualHost = Me.VirtualHosts.Where(Function(Settings) Settings.Name.Equals(Address.ToLower) Or Address Like Settings.Name).SingleOrDefault
         Return VirtualHost IsNot Nothing
     End Function
+    ''' <summary>
+    ''' Raises event for messages
+    ''' </summary>
     Public Sub Log(Message As String)
         RaiseEvent ServerMessage(Message)
     End Sub
+    ''' <summary>
+    ''' Raises event if a client throws an exception
+    ''' </summary>
     Public Sub ClientExceptionCaught(sender As Object, ex As Exception)
         RaiseEvent ExceptionCaught(sender, ex)
     End Sub
+    ''' <summary>
+    ''' Plugin Event: Initialize
+    ''' </summary>
     Public Sub PluginEventInitialize()
         For Each plugin As IPlugin In Me.Plugins
             plugin.Load()
         Next
     End Sub
+    ''' <summary>
+    ''' Plugin Event: Before Request
+    ''' </summary>
     Public Sub PluginEventRequest(client As Client, ByRef Claimed As Boolean)
         For Each plugin As IPlugin In Me.Plugins
             plugin.ClientRequest(client, Claimed)
         Next
     End Sub
+    ''' <summary>
+    ''' Plugin Event: Before Send
+    ''' </summary>
     Public Sub PluginEventSend(client As Client, ByRef buffer() As Byte, ByRef ContentType As String)
         For Each plugin As IPlugin In Me.Plugins
             plugin.ClientSend(client, buffer, ContentType)
         Next
     End Sub
+    ''' <summary>
+    ''' Listener main worker method
+    ''' </summary>
     Private Sub Worker()
         If (Me.Running) Then
             Me.Running = False
@@ -57,6 +84,8 @@ Public Class Listener
         Me.Timer = New Stopwatch
         Me.Handle = New ManualResetEvent(False)
         Me.HttpListener = Listener.Create(Me.VirtualHosts)
+        Me.HttpListenerSettings()
+        Me.HttpListenerPlugins()
         Me.HttpListener.Start()
         Me.HttpListener.BeginGetContext(AddressOf Me.ProcessIncomingRequest, Me.HttpListener)
         Me.PluginEventInitialize()
@@ -83,6 +112,22 @@ Public Class Listener
             RaiseEvent StatusChange(False)
         End Try
     End Sub
+    ''' <summary>
+    ''' Setups the listener settings
+    ''' </summary>
+    Private Sub HttpListenerSettings()
+        With Me.HttpListener.TimeoutManager
+            .DrainEntityBody = New TimeSpan(0, 0, Me.TimeOutDrainEntityBody)
+            .EntityBody = New TimeSpan(0, 0, Me.TimeOutDrainEntityBody)
+            .HeaderWait = New TimeSpan(0, 0, Me.TimeOutHeaderWait)
+            .IdleConnection = New TimeSpan(0, 0, Me.TimeOutIdleConnection)
+            .RequestQueue = New TimeSpan(0, 0, Me.TimeOutRequestPickup)
+            .MinSendBytesPerSecond = Me.MinSendBytesPerSecond
+        End With
+    End Sub
+    ''' <summary>
+    ''' Starts the process of an incoming request
+    ''' </summary>
     Private Sub ProcessIncomingRequest(Result As IAsyncResult)
         Try
             If (TypeOf Result.AsyncState Is HttpListener) Then
@@ -90,7 +135,15 @@ Public Class Listener
                     If (Not Result.IsCompleted) Then
                         Result.AsyncWaitHandle.WaitOne()
                     End If
-                    Me.Queue.Enqueue(New Client(Me, CType(Result.AsyncState, HttpListener).EndGetContext(Result)))
+                    If (Me.Queue.Count <= Me.MaxWaitQueue) Then
+                        Me.Queue.Enqueue(New Client(Me, CType(Result.AsyncState, HttpListener).EndGetContext(Result)))
+                    Else
+                        Me.Log("[Warning] Request dropped, queue is currently full.")
+                        Dim context As HttpListenerContext = CType(Result.AsyncState, HttpListener).EndGetContext(Result)
+                        context.Response.StatusCode = HttpStatusCode.ServiceUnavailable
+                        context.Response.OutputStream.Close()
+                        context.Response.Close()
+                    End If
                 End If
             Else
                 Throw New Exception("unable to handle request")
@@ -99,6 +152,9 @@ Public Class Listener
             Me.HttpListener.BeginGetContext(AddressOf Me.ProcessIncomingRequest, Me.HttpListener)
         End Try
     End Sub
+    ''' <summary>
+    ''' Starts client process
+    ''' </summary>
     Private Sub BeginClientRequest(sender As Object)
         Try
             If (TypeOf sender Is Client) Then
@@ -108,9 +164,20 @@ Public Class Listener
             RaiseEvent ExceptionCaught(sender, ex)
         End Try
     End Sub
+    ''' <summary>
+    ''' Blocks current thread while waiting for clients to finish
+    ''' </summary>
     Private Sub WaitForClients()
         If (Me.Queue.Any) Then
             WaitHandle.WaitAll(Me.Queue.Select(Function(client) client.Handle).ToArray)
         End If
+    End Sub
+    ''' <summary>
+    ''' Loads plugin assemblies
+    ''' </summary>
+    Private Sub HttpListenerPlugins()
+        For Each plugin As IPlugin In Me.Plugins
+            Me.Log(String.Format("+ Plugin '{0}' loaded", plugin.Name))
+        Next
     End Sub
 End Class

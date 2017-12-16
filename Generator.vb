@@ -12,20 +12,21 @@ Public Class Generator
         Me.Elements = New Dictionary(Of ElementType, String)
     End Sub
     Public Function ErrorPage(StatusCode As HttpStatusCode) As Byte()
-        If (File.Exists(Me.Client.LocalPath(Me.Client.Config.ErrorPageTemplate))) Then
+        If (File.Exists(Me.Client.LocalPath(Me.Client.Settings.ErrorPageTemplate))) Then
             Dim document As New XmlDocument, base As XmlElement
-            Using fs As New FileStream(Me.Client.LocalPath(Me.Client.Config.ErrorPageTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
+            Using fs As New FileStream(Me.Client.LocalPath(Me.Client.Settings.ErrorPageTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
                 document.Load(fs)
             End Using
             If (Generator.HasDefinedTemplate(document)) Then
-                base = Me.GetElement(document, "Templates")
+                base = Generator.GetElement(document, "Templates")
                 If (Generator.HasDefinedErrorTemplate(base)) Then
-                    base = Me.GetElement(document, "ErrorTemplate")
+                    base = Generator.GetElement(document, "ErrorTemplate")
                     '// Generate body
                     If (Generator.HasDefinedBody(base)) Then
-                        Me.Elements.Add(ElementType.Body, base.SelectSingleNode("Body").InnerText.Trim)
+                        Me.Elements.Add(ElementType.Body, Generator.Trim(base.SelectSingleNode("Body").InnerText))
                         Me.Elements(ElementType.Body) = Me.Elements(ElementType.Body).Replace("{0}", CType(StatusCode, Int32).ToString)
                         Me.Elements(ElementType.Body) = Me.Elements(ElementType.Body).Replace("{1}", StatusCode.ToString)
+                        '// Append to byte array
                         Me.AddRange(Me.Client.Encoding.GetBytes(Me.Elements(ElementType.Body)))
                     End If
                 End If
@@ -34,30 +35,30 @@ Public Class Generator
         Return Me.ToArray
     End Function
     Public Function DirectoryPage(Dir As String) As Byte()
-        If (File.Exists(Me.Client.LocalPath(Me.Client.Config.DirectoryTemplate)) AndAlso Directory.Exists(Dir)) Then
+        If (File.Exists(Me.Client.LocalPath(Me.Client.Settings.DirectoryTemplate)) AndAlso Directory.Exists(Dir)) Then
             Dim document As New XmlDocument, base As XmlElement, relativeAddress As String = Me.Client.RelativePath(Dir)
-            Using fs As New FileStream(Me.Client.LocalPath(Me.Client.Config.DirectoryTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
+            Using fs As New FileStream(Me.Client.LocalPath(Me.Client.Settings.DirectoryTemplate), FileMode.Open, FileAccess.Read, FileShare.None)
                 document.Load(fs)
             End Using
             If (Generator.HasDefinedTemplate(document)) Then
-                base = Me.GetElement(document, "Templates")
+                base = Generator.GetElement(document, "Templates")
                 If (Generator.HasDefinedDirTemplate(base)) Then
-                    base = Me.GetElement(base, "DirectoryTemplate")
+                    base = Generator.GetElement(base, "DirectoryTemplate")
                     '// Readme.md Support
                     If (Generator.HasDefinedReadMe(base)) Then
-                        Dim readme As XmlElement = Me.GetElement(base, "Readme")
+                        Dim readme As XmlElement = Generator.GetElement(base, "Readme")
                         Me.Elements.Add(ElementType.Readme, readme.GetAttribute("Filename"))
-                        Me.Elements.Add(ElementType.ReadmeTag, readme.InnerText.Trim)
+                        Me.Elements.Add(ElementType.ReadmeTag, Generator.Trim(readme.InnerText))
                     End If
                     '// Generate body
                     If (Generator.HasDefinedBody(base) And Generator.HasDefinedFolder(base) And Generator.HasDefinedFile(base)) Then
                         Dim output As New List(Of String)
-                        Me.Elements.Add(ElementType.Body, base.SelectSingleNode("Body").InnerText.Trim.Replace("{LOCATION}", relativeAddress))
-                        Me.Elements.Add(ElementType.Folders, base.SelectSingleNode("Folders").InnerText.Trim)
-                        Me.Elements.Add(ElementType.Files, base.SelectSingleNode("Files").InnerText.Trim)
+                        Me.Elements.Add(ElementType.Body, Generator.Trim(base.SelectSingleNode("Body").InnerText).Replace("{LOCATION}", relativeAddress))
+                        Me.Elements.Add(ElementType.Folders, Generator.Trim(base.SelectSingleNode("Folders").InnerText))
+                        Me.Elements.Add(ElementType.Files, Generator.Trim(base.SelectSingleNode("Files").InnerText))
                         For Each d As String In Directory.GetDirectories(Dir)
                             Dim current As New DirectoryInfo(d)
-                            If (Me.Client.Config.HideDotNames And current.Name.StartsWith(".")) Then
+                            If (Me.Client.Settings.HideDotNames And current.Name.StartsWith(".")) Then
                                 Continue For
                             End If
                             output.Add(String.Format(Me.Elements(ElementType.Folders), relativeAddress, current.Name, current.LastWriteTime.ToString("r")))
@@ -65,7 +66,7 @@ Public Class Generator
                         For Each f As String In Directory.GetFiles(Dir)
                             Dim current As New FileInfo(f)
                             If (Not Me.Client.IsHiddenFileType(f)) Then
-                                If (Me.Client.Config.HideDotNames And current.Name.StartsWith(".")) Then
+                                If (Me.Client.Settings.HideDotNames And current.Name.StartsWith(".")) Then
                                     Continue For
                                 End If
                                 If (current.Name.ToLower.Equals(Me.Elements(ElementType.Readme).ToLower)) Then
@@ -76,7 +77,6 @@ Public Class Generator
                                 output.Add(String.Format(Me.Elements(ElementType.Files), relativeAddress, current.Name, current.LastWriteTime.ToString("r"), current.Length.HumanReadable))
                             End If
                         Next
-
                         '// Append to byte array
                         Me.AddRange(Me.Client.Encoding.GetBytes(Me.Elements(ElementType.Body).Replace("{TABLE}", String.Join(Environment.NewLine, output))))
                     End If
@@ -86,15 +86,21 @@ Public Class Generator
         Return Me.ToArray
     End Function
     ''' <summary>
+    ''' Trims string data
+    ''' </summary>
+    Public Shared Function Trim(str As String) As String
+        Return str.Trim(ControlChars.Tab, ControlChars.Cr, ControlChars.Lf)
+    End Function
+    ''' <summary>
     ''' Cast the first XML element by reference
     ''' </summary>
-    Private Function GetElement(node As XmlDocument, Reference As String) As XmlElement
+    Public Shared Function GetElement(node As XmlDocument, Reference As String) As XmlElement
         Return node.GetElementsByTagName(Reference).Cast(Of XmlElement)().First
     End Function
     ''' <summary>
     ''' Cast the first XML element by reference
     ''' </summary>
-    Private Function GetElement(node As XmlElement, Reference As String) As XmlElement
+    Public Shared Function GetElement(node As XmlElement, Reference As String) As XmlElement
         Return node.GetElementsByTagName(Reference).Cast(Of XmlElement)().First
     End Function
     ''' <summary>

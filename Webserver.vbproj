@@ -90,6 +90,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Access.vb" />
     <Compile Include="Enums.vb" />
     <Compile Include="Client.vb" />
     <Compile Include="Config.vb" />

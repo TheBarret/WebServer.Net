@@ -3,8 +3,11 @@ Imports System.Text
 Imports System.Globalization
 
 Public Class VirtualHost
-#Region "Constructors"
-    Sub New(Parent As Config, DocumentRoot As String, Prefix As String, Encoder As String)
+#Region "Routines"
+    ''' <summary>
+    ''' Initializes the settings for this virtualhost, returns true if config succeeds
+    ''' </summary>
+    Public Function Initialize(Parent As Config, DocumentRoot As String, Prefix As String, Encoder As String) As Boolean
         Me.Parent = Parent
         Me.Prefix = Prefix
         Me.Culture = New CultureInfo("en-US")
@@ -13,8 +16,9 @@ Public Class VirtualHost
         Me.DefaultIndexPages = New List(Of String)
         Me.IllegalPathChars = New List(Of String)
         Me.Headers = New Dictionary(Of String, String)
-        Me.DocumentRoot = VirtualHost.GetDirectory(Parent.BasePath.FullName, DocumentRoot)
-    End Sub
+        Me.Root = VirtualHost.GetDirectory(Parent.Root.FullName, DocumentRoot)
+        Return Me.Valid
+    End Function
 #End Region
 #Region "Shared"
     ''' <summary>
@@ -50,29 +54,28 @@ Public Class VirtualHost
     Public Property Parent As Config
     Public Property Prefix As String
     Public Property Encoder As Encoding
-    Public Property KeepAlive As Boolean
     Public Property Culture As CultureInfo
-    Public Property DocumentRoot As DirectoryInfo
+    Public Property Root As DirectoryInfo
+    Public Property KeepAlive As Boolean = True
     Public Property MaxQuerySize As Integer = 255
     Public Property MaxQueryLength As Integer = 255
-    Public Property DirectoryTemplate As String
-    Public Property ErrorPageTemplate As String
+    Public Property AccessFilename As String = "access.xml"
+    Public Property DirectoryTemplate As String = "template.xml"
+    Public Property ErrorPageTemplate As String = "template.xml"
     Public Property HiddenFileTypes As List(Of String)
     Public Property IllegalPathChars As List(Of String)
     Public Property DefaultIndexPages As List(Of String)
     Public Property HideDotNames As Boolean = True
     Public Property AllowDirListing As Boolean = False
     Public Property Headers As Dictionary(Of String, String)
-#End Region
-#Region "Read Only Properties"
     Public ReadOnly Property Name As String
         Get
             Return Me.Prefix.Substring(0, Me.Prefix.IndexOf(":")).ToLower
         End Get
     End Property
-    Public ReadOnly Property Validated As Boolean
+    Public ReadOnly Property Valid As Boolean
         Get
-            Return Me.DocumentRoot IsNot Nothing AndAlso Me.DocumentRoot.Exists
+            Return Me.Root IsNot Nothing AndAlso Me.Root.Exists
         End Get
     End Property
 #End Region

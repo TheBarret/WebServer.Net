@@ -12,14 +12,15 @@
             AddHandler listener.ServerHeartBeat, AddressOf ListenerHeartBeat
             AddHandler listener.ExceptionCaught, AddressOf ListenerException
             AddHandler listener.ServerMessage, AddressOf ListenerMessage
-            For Each vhost In listener.VirtualHosts
-                Console.WriteLine("-> Found: {0}", vhost.Prefix)
+            For Each Settings In listener.VirtualHosts
+                Console.WriteLine("-> Found: {0}", Settings.Prefix)
             Next
             Do
                 listener.Start()
             Loop Until Console.ReadKey.Key = ConsoleKey.Q
         Catch ex As Exception
             ListenerException(Nothing, ex)
+            Console.Read()
         Finally
             If (listener IsNot Nothing AndAlso listener.Running) Then
                 listener.Shutdown()
@@ -43,7 +44,7 @@
         If (sender Is Nothing) Then
             Console.WriteLine(String.Format("Exception caught: {0}", ex.Message))
         Else
-            Console.WriteLine(String.Format("Exception caught: {0} {1}", sender.GetType.Name, ex.Message))
+            Console.WriteLine(String.Format("Exception caught: [{0}] {1}", sender.GetType.Name, ex.Message))
         End If
     End Sub
 End Module

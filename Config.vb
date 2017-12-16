@@ -7,25 +7,19 @@ Imports System.Globalization
 Imports Webserver.Plugins
 
 Public MustInherit Class Config
-    Public Const DEFAULT_CONTENT_TYPE As String = "application/octet-stream"
-    Public Property Delay As Integer = 100
-    Public Property Workers As Integer = 1
-    Public Property IOWorkers As Integer = 1
-    Public Property VirtualHosts As List(Of VirtualHost)
-    Public Property ContentTypes As Dictionary(Of String, String)
-    Public Property Plugins As List(Of IPlugin)
 #Region "Routines"
     ''' <summary>
     ''' Initializes the config class and returns true if its valid and supported
     ''' </summary>
     Public Function Initialize(BasePath As String) As Boolean
-        If (HttpListener.IsSupported AndAlso BasePath.Length > 0) Then
+        Me.m_root = New DirectoryInfo(Path.GetFullPath(BasePath))
+        If (HttpListener.IsSupported AndAlso Me.Valid) Then
             Me.Plugins = New List(Of IPlugin)
             Me.VirtualHosts = New List(Of VirtualHost)
             Me.ContentTypes = New Dictionary(Of String, String)
-            Me.m_basepath = New DirectoryInfo(Path.GetFullPath(BasePath))
+            Return True
         End If
-        Return Me.Validated
+        Return False
     End Function
     ''' <summary>
     ''' Tries to get the content type value for given filename
@@ -48,14 +42,58 @@ Public MustInherit Class Config
         Return Config.DEFAULT_CONTENT_TYPE
     End Function
 #End Region
-#Region "Read Only Properties"
+#Region "Properties"
+    ''' <summary>
+    ''' Holds the default fallback content type
+    ''' </summary>
+    Public Const DEFAULT_CONTENT_TYPE As String = "application/octet-stream"
+    ''' <summary>
+    ''' Holds the delay in msecs for the queue thread
+    ''' </summary>
+    Public Property Delay As Integer = 100
+    ''' <summary>
+    ''' Holds the total threadpool workers
+    ''' </summary>
+    Public Property Workers As Integer = 1
+    ''' <summary>
+    ''' Holds the total IO thread workers
+    ''' </summary>
+    Public Property IOWorkers As Integer = 1
+    ''' <summary>
+    ''' Holds the plugin assemblies if any
+    ''' </summary>
+    Public Property Plugins As List(Of IPlugin)
+    ''' <summary>
+    ''' Holds the vhirtual hosts definitions
+    ''' </summary>
+    Public Property VirtualHosts As List(Of VirtualHost)
+    ''' <summary>
+    ''' Holds the defined content types (MIME)
+    ''' </summary>
+    Public Property ContentTypes As Dictionary(Of String, String)
+    ''' <summary>
+    ''' Holds the defined time outs and rates for the httplistener
+    ''' </summary>
+    Public Property TimeOutDrainEntityBody As Integer
+    Public Property TimeOutEntityBody As Integer
+    Public Property TimeOutHeaderWait As Integer
+    Public Property TimeOutIdleConnection As Integer
+    Public Property TimeOutRequestPickup As Integer
+    ''' <summary>
+    ''' Holds the defined minimal send rate
+    ''' </summary>
+    Public Property MinSendBytesPerSecond As Integer
+    ''' <summary>
+    ''' Holds the defined maximum request queue
+    ''' </summary>
+    Public Property MaxWaitQueue As Integer
     ''' <summary>
     ''' Holds the absolute base path of the server
     ''' </summary>
-    Private m_basepath As DirectoryInfo
-    Public ReadOnly Property BasePath As DirectoryInfo
+    Private m_root As DirectoryInfo
+    Public ReadOnly Property Root As DirectoryInfo
         Get
-            Return Me.m_basepath
+            Return Me.m_root
         End Get
     End Property
     ''' <summary>
@@ -63,15 +101,15 @@ Public MustInherit Class Config
     ''' </summary>
     Public ReadOnly Property LocalPath(ParamArray Combine() As String) As String
         Get
-            Return Path.GetFullPath(String.Format("{0}\{1}", Me.BasePath.FullName, String.Join("\", Combine)))
+            Return Path.GetFullPath(String.Format("{0}\{1}", Me.Root.FullName, String.Join("\", Combine)))
         End Get
     End Property
     ''' <summary>
     ''' Returns true if config has a valid base path
     ''' </summary>
-    Public ReadOnly Property Validated As Boolean
+    Public ReadOnly Property Valid As Boolean
         Get
-            Return Me.BasePath IsNot Nothing AndAlso Me.BasePath.Exists
+            Return Me.Root IsNot Nothing AndAlso Me.Root.Exists
         End Get
     End Property
 #End Region
@@ -86,7 +124,7 @@ Public MustInherit Class Config
                 document.Load(fs)
             End Using
             If (Config.ValidateDocument(document)) Then
-                base = document.GetElementsByTagName("Config").Cast(Of XmlElement)().First
+                base = Config.GetElement(document, "Config")
                 listener = New Listener()
                 If (listener.Initialize(base.GetAttribute("Base"))) Then
                     If (Config.HasDefinedThreadSettings(base)) Then
@@ -94,35 +132,52 @@ Public MustInherit Class Config
                         Integer.TryParse(base.GetAttribute("Delay"), listener.Delay)
                         Integer.TryParse(base.GetAttribute("Workers"), listener.Workers)
                     End If
+                    If (Config.HasDefinedListenerSettings(base)) Then
+                        Dim settings As XmlElement = Config.GetElement(base, "Listener")
+                        Integer.TryParse(settings.GetAttribute("DrainEntityBody"), listener.TimeOutDrainEntityBody)
+                        Integer.TryParse(settings.GetAttribute("EntityBody"), listener.TimeOutEntityBody)
+                        Integer.TryParse(settings.GetAttribute("HeaderWait"), listener.TimeOutHeaderWait)
+                        Integer.TryParse(settings.GetAttribute("IdleConnection"), listener.TimeOutIdleConnection)
+                        Integer.TryParse(settings.GetAttribute("RequestPickup"), listener.TimeOutRequestPickup)
+                        Integer.TryParse(settings.GetAttribute("MinSendBytesPerSecond"), listener.MinSendBytesPerSecond)
+                        Integer.TryParse(settings.GetAttribute("MaxWaitQueue"), listener.MaxWaitQueue)
+                    End If
                     If (Config.HasDefinedPlugins(base)) Then
                         For Each plugin As String In Config.Parse(base.SelectSingleNode("Plugins").InnerText)
                             Dim fn As String = listener.LocalPath(plugin)
-                            If (File.Exists(fn)) Then Config.LoadAssembly(fn, listener.Plugins)
+                            If (File.Exists(fn)) Then
+                                If (Not Config.LoadAssembly(fn, listener.Plugins)) Then
+                                    Throw New Exception(String.Format("Could not load plugin {0}", Path.GetFileName(fn)))
+                                End If
+                            End If
+
                         Next
                     End If
                     If (Config.ValidateContentType(base)) Then
                         listener.ContentTypes = Config.Parse(base.SelectSingleNode("ContentType").InnerText, "=")
                         If (Config.HasDefinedVirtualHosts(base)) Then
                             For Each node As XmlElement In base.SelectNodes("VirtualHost")
-                                Dim vhost As New VirtualHost(listener,
-                                                             node.GetAttribute("Base"),
-                                                             node.GetAttribute("Prefix"),
-                                                             node.GetAttribute("Encoding"))
-                                Boolean.TryParse(node.GetAttribute("KeepAlive"), vhost.KeepAlive)
-                                Boolean.TryParse(node.SelectSingleNode("HideDotNames").InnerText, vhost.HideDotNames)
-                                Integer.TryParse(node.SelectSingleNode("MaxQueryLength").InnerText, vhost.MaxQueryLength)
-                                Integer.TryParse(node.SelectSingleNode("MaxQueryVariableSize").InnerText, vhost.MaxQuerySize)
-                                Boolean.TryParse(node.SelectSingleNode("AllowDirListing").InnerText, vhost.AllowDirListing)
-                                vhost.Headers = VirtualHost.Parse(node.SelectSingleNode("CustomHeaders").InnerText, "=")
-                                vhost.HiddenFileTypes = VirtualHost.Parse(node.SelectSingleNode("HiddenFileTypes").InnerText)
-                                vhost.DefaultIndexPages = VirtualHost.Parse(node.SelectSingleNode("DefaultIndexPages").InnerText)
-                                vhost.ErrorPageTemplate = node.SelectSingleNode("ErrorPageTemplate").InnerText
-                                vhost.DirectoryTemplate = node.SelectSingleNode("DirectoryListingTemplate").InnerText
-                                vhost.IllegalPathChars = VirtualHost.Parse(node.SelectSingleNode("IllegalPathChars").InnerText)
-                                If (Config.HasDefinedLocalization(node)) Then
-                                    vhost.Culture = New CultureInfo(node.SelectSingleNode("Culture").InnerText)
+                                Dim Settings As New VirtualHost
+                                If (Settings.Initialize(listener, node.GetAttribute("Base"), node.GetAttribute("Prefix"), node.GetAttribute("Encoding"))) Then
+                                    Boolean.TryParse(node.GetAttribute("KeepAlive"), Settings.KeepAlive)
+                                    Boolean.TryParse(node.SelectSingleNode("HideDotNames").InnerText, Settings.HideDotNames)
+                                    Integer.TryParse(node.SelectSingleNode("MaxQueryLength").InnerText, Settings.MaxQueryLength)
+                                    Integer.TryParse(node.SelectSingleNode("MaxQueryVariableSize").InnerText, Settings.MaxQuerySize)
+                                    Boolean.TryParse(node.SelectSingleNode("AllowDirListing").InnerText, Settings.AllowDirListing)
+                                    Settings.AccessFilename = node.SelectSingleNode("AccessFile").InnerText
+                                    Settings.Headers = VirtualHost.Parse(node.SelectSingleNode("CustomHeaders").InnerText, "=")
+                                    Settings.HiddenFileTypes = VirtualHost.Parse(node.SelectSingleNode("HiddenFileTypes").InnerText)
+                                    Settings.DefaultIndexPages = VirtualHost.Parse(node.SelectSingleNode("DefaultIndexPages").InnerText)
+                                    Settings.ErrorPageTemplate = node.SelectSingleNode("ErrorPageTemplate").InnerText
+                                    Settings.DirectoryTemplate = node.SelectSingleNode("DirectoryListingTemplate").InnerText
+                                    Settings.IllegalPathChars = VirtualHost.Parse(node.SelectSingleNode("IllegalPathChars").InnerText)
+                                    If (Config.HasDefinedLocalization(node)) Then
+                                        Settings.Culture = New CultureInfo(node.SelectSingleNode("Culture").InnerText)
+                                    End If
+                                    listener.VirtualHosts.Add(Settings)
+                                Else
+                                    Throw New Exception("virtualhost Document root does not exist")
                                 End If
-                                listener.VirtualHosts.Add(vhost)
                             Next
                         Else
                             Throw New Exception("incomplete virtualhost config entry")
@@ -135,7 +190,7 @@ Public MustInherit Class Config
                     Throw New Exception("could not create server")
                 End If
             Else
-                Throw New Exception("invalid xml config")
+                Throw New IOException("invalid xml config")
             End If
         End If
         Throw New IOException("config file not found")
@@ -143,10 +198,10 @@ Public MustInherit Class Config
     ''' <summary>
     ''' Creates a new httplistener with defined prefix values
     ''' </summary>
-    Public Shared Function Create(vhosts As List(Of VirtualHost)) As HttpListener
+    Public Shared Function Create(Settingss As List(Of VirtualHost)) As HttpListener
         Dim httplistener As New HttpListener
-        For Each vhost As VirtualHost In vhosts
-            httplistener.Prefixes.Add(String.Format("http://{0}/", vhost.Prefix))
+        For Each Settings As VirtualHost In Settingss
+            httplistener.Prefixes.Add(String.Format("http://{0}/", Settings.Prefix))
         Next
         Return httplistener
     End Function
@@ -179,17 +234,37 @@ Public MustInherit Class Config
     ''' <summary>
     ''' Returns plugin assembly from given filename
     ''' </summary>
-    Public Shared Sub LoadAssembly(filename As String, Collection As List(Of IPlugin))
-        Dim asm As Assembly = Assembly.LoadFile(filename)
-        For Each t As Type In asm.GetTypes.Where(Function(x) GetType(IPlugin).IsAssignableFrom(x))
-            Collection.Add(CType(Activator.CreateInstance(t), IPlugin))
-        Next
-    End Sub
+    Public Shared Function LoadAssembly(filename As String, Collection As List(Of IPlugin)) As Boolean
+        Try
+            Dim asm As Assembly = Assembly.LoadFile(filename)
+            For Each t As Type In asm.GetTypes.Where(Function(x) GetType(IPlugin).IsAssignableFrom(x))
+                Collection.Add(CType(Activator.CreateInstance(t), IPlugin))
+            Next
+            Return True
+        Catch ex As Exception
+            Return False
+        End Try
+    End Function
+    ''' <summary>
+    ''' Cast the first XML element by reference
+    ''' </summary>
+    Public Shared Function GetElement(node As XmlDocument, Reference As String) As XmlElement
+        Return node.GetElementsByTagName(Reference).Cast(Of XmlElement)().First
+    End Function
+    Public Shared Function GetElement(node As XmlElement, Reference As String) As XmlElement
+        Return node.GetElementsByTagName(Reference).Cast(Of XmlElement)().First
+    End Function
     ''' <summary>
     ''' Validates XML document
     ''' </summary>
     Public Shared Function ValidateDocument(doc As XmlDocument) As Boolean
         Return doc.SelectSingleNode("Config") IsNot Nothing
+    End Function
+    ''' <summary>
+    ''' Validates XML element
+    ''' </summary>
+    Public Shared Function HasDefinedListenerSettings(node As XmlElement) As Boolean
+        Return node.SelectSingleNode("Listener") IsNot Nothing
     End Function
     ''' <summary>
     ''' Validates XML element
@@ -235,7 +310,8 @@ Public MustInherit Class Config
                node.SelectSingleNode("HideDotNames") IsNot Nothing AndAlso
                node.SelectSingleNode("IllegalPathChars") IsNot Nothing AndAlso
                node.SelectSingleNode("ErrorPageTemplate") IsNot Nothing AndAlso
-               node.SelectSingleNode("DirectoryListingTemplate") IsNot Nothing
+               node.SelectSingleNode("DirectoryListingTemplate") IsNot Nothing AndAlso
+               node.SelectSingleNode("AccessFile") IsNot Nothing
     End Function
 #End Region
 End Class
