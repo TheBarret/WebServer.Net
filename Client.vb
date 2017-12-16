@@ -120,7 +120,7 @@ Public Class Client
         End If
     End Sub
     ''' <summary>
-    ''' Returns boolean if a directory contains an access.xml file
+    ''' Returns boolean if a directory contains an access configuration file
     ''' </summary>
     Private Function HasAccessFile(Dir As String) As Boolean
         If (File.GetAttributes(Dir) = FileAttributes.Directory) Then
