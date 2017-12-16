@@ -120,7 +120,6 @@
         	Each entry needs to be on a new line
     	-->
     	<Plugins>
-        	..\PluginExample.dll
     	</Plugins>
     
 </Config>
