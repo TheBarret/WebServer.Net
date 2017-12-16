@@ -133,28 +133,31 @@ Public Class Client
     ''' Constructs headers and sends data to browser
     ''' </summary>
     Public Sub SendRequest(Buffer() As Byte, ContentType As String, LastModified As DateTime, Optional HttpStatusCodeOk As Boolean = True)
-        If (HttpStatusCodeOk) Then
-            Me.SetStatus(HttpStatusCode.OK)
-        End If
-        Me.Listener.PluginEventSend(Me, Buffer, ContentType)
-        Buffer = GZip.Compress(Buffer)
-        Me.Response.AddHeader("Accept", "*/*")
-        Me.Response.AddHeader("Accept-Charset", Me.Encoding.BodyName)
-        Me.Response.AddHeader("Accept-Language", Me.Culture.Name)
-        Me.Response.ContentType = ContentType
-        Me.Response.ContentLength64 = Buffer.Length
-        Me.Response.ContentEncoding = Me.Encoding
-        Me.Response.AddHeader("Content-Encoding", "gzip")
-        Me.Response.AddHeader("connection", Me.KeepAlive)
-        Me.Response.AddHeader("Last-Modified", LastModified.ToString("r"))
-        Me.Response.AddHeader("Date", DateTime.Now.ToString("r"))
-        Me.Response.AddHeader("CRC32", New CRC32(Buffer).ComputeHashToString)
-        For Each entry As KeyValuePair(Of String, String) In Me.Settings.Headers
-            Me.Response.AddHeader(entry.Key, entry.Value)
-        Next
-        Me.Response.SendChunked = False
-        Me.Response.OutputStream.Write(Buffer, 0, Buffer.Length)
-        Me.Response.OutputStream.Flush()
+       Try
+            Me.Listener.PluginEventSend(Me, Buffer, ContentType)
+        Finally
+            If (HttpStatusCodeOk) Then
+                Me.SetStatus(HttpStatusCode.OK)
+            End If
+            Buffer = GZip.Compress(Buffer)
+            Me.Response.AddHeader("Accept", "*/*")
+            Me.Response.AddHeader("Accept-Charset", Me.Encoding.BodyName)
+            Me.Response.AddHeader("Accept-Language", Me.Culture.Name)
+            Me.Response.ContentType = ContentType
+            Me.Response.ContentLength64 = Buffer.Length
+            Me.Response.ContentEncoding = Me.Encoding
+            Me.Response.AddHeader("Content-Encoding", "gzip")
+            Me.Response.AddHeader("connection", Me.KeepAlive)
+            Me.Response.AddHeader("Last-Modified", LastModified.ToString("r"))
+            Me.Response.AddHeader("Date", DateTime.Now.ToString("r"))
+            Me.Response.AddHeader("CRC32", New CRC32(Buffer).ComputeHashToString)
+            For Each entry As KeyValuePair(Of String, String) In Me.Settings.Headers
+                Me.Response.AddHeader(entry.Key, entry.Value)
+            Next
+            Me.Response.SendChunked = False
+            Me.Response.OutputStream.Write(Buffer, 0, Buffer.Length)
+            Me.Response.OutputStream.Flush()
+        End Try
     End Sub
     ''' <summary>
     ''' Returns boolean and adjusts directory that contains an index page
