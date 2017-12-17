@@ -12,6 +12,7 @@ Features:
 - Readme.md embedding
 - GET/POST Handling
 - Plugin Support
+- XM Script Plugin/Handler
 - Easy XML Configuration
 - Per directory access configurations
 
@@ -24,3 +25,6 @@ Directory Listing (With Readme.md support)
 
 Custom Error Pages
 ![](https://i.imgur.com/8EHfbUo.png)
+
+XM Front-End
+![](https://i.imgur.com/tfqfPui.png)
