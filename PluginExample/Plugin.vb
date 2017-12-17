@@ -10,14 +10,13 @@ Public Class Plugin
     Public Sub ClientRequest(Client As Client, ByRef Claimed As Boolean) Implements IPlugin.ClientRequest
         ' We can claim a request before the server handles it, this would be usefull if we implement a custom script handler
         ' When claimed is set to true, the server will not process the request and close it when the plugin routine is finished.
-
         ' !! Remark !! 
         ' Plugins made by other developers can ignore the 'Claimed' status
 
         'If (Not Claimed AndAlso Client.Request.Url.AbsolutePath.Equals("/alias")) Then
+        '   Claimed = True
         '   ...do something with the request...
         '   Client.SendRequest(buffer,ContentType,Date,False)
-        '   Claimed = True
         'End If
     End Sub
     Public Sub ClientSend(Client As Client, ByRef buffer() As Byte, ByRef ContentType As String) Implements IPlugin.ClientSend
