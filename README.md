@@ -31,3 +31,6 @@ Xm Script Plugin
 
 XM Script Post Form Test
 ![](https://i.imgur.com/tfqfPui.png)
+
+XM Script
+![](https://i.imgur.com/BMayqkS.png)
