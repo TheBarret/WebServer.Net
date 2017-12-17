@@ -4,7 +4,7 @@ Imports System.Text.RegularExpressions
 
 Public Class Plugin
     Implements IPlugin
-    Public Sub Load() Implements IPlugin.Load
+    Public Sub Load(Listener As Listener) Implements IPlugin.Load
         ' Initialize code here...
     End Sub
     Public Sub ClientRequest(Client As Client, ByRef Claimed As Boolean) Implements IPlugin.ClientRequest
