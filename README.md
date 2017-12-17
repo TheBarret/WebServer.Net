@@ -18,7 +18,8 @@ Features:
 
 # Important Note regarding the Xm Plugin
 
-If you are going to test the XM plugin, you need to recompile the plugin and the xm engine and place them into the `debug` folder.
+If you are going to test the XM plugin, you need to recompile the plugin and
+the Xm engine and place both dll's into the `debug` folder.
 Don't forget to adjust the `config.xml` file.
 
 
