@@ -88,6 +88,10 @@ Public MustInherit Class Config
     ''' </summary>
     Public Property MaxWaitQueue As Integer
     ''' <summary>
+    ''' Holds the defined boolean to show errors
+    ''' </summary>
+    Public Property ShowErrors As Boolean = False
+    ''' <summary>
     ''' Holds the absolute base path of the server
     ''' </summary>
     Private m_root As DirectoryInfo
@@ -153,6 +157,10 @@ Public MustInherit Class Config
 
                         Next
                     End If
+                    If (Config.HasDefinedDebugging(base)) Then
+                        Dim debugging As XmlElement = Config.GetElement(base, "Debugging")
+                        Boolean.TryParse(debugging.GetAttribute("ShowErrors"), listener.ShowErrors)
+                    End If
                     If (Config.ValidateContentType(base)) Then
                         listener.ContentTypes = Config.Parse(base.SelectSingleNode("ContentType").InnerText, "=")
                         If (Config.HasDefinedVirtualHosts(base)) Then
@@ -164,7 +172,7 @@ Public MustInherit Class Config
                                     Integer.TryParse(node.SelectSingleNode("MaxQueryLength").InnerText, Settings.MaxQueryLength)
                                     Integer.TryParse(node.SelectSingleNode("MaxQueryVariableSize").InnerText, Settings.MaxQuerySize)
                                     Boolean.TryParse(node.SelectSingleNode("AllowDirListing").InnerText, Settings.AllowDirListing)
-                                    Settings.AccessFilename = node.SelectSingleNode("AccessFile").InnerText
+                                    Settings.AccessConfig = node.SelectSingleNode("AccessFile").InnerText
                                     Settings.Headers = VirtualHost.Parse(node.SelectSingleNode("CustomHeaders").InnerText, "=")
                                     Settings.HiddenFileTypes = VirtualHost.Parse(node.SelectSingleNode("HiddenFileTypes").InnerText)
                                     Settings.DefaultIndexPages = VirtualHost.Parse(node.SelectSingleNode("DefaultIndexPages").InnerText)
@@ -290,6 +298,12 @@ Public MustInherit Class Config
     ''' </summary>
     Public Shared Function HasDefinedPlugins(node As XmlElement) As Boolean
         Return node.SelectSingleNode("Plugins") IsNot Nothing
+    End Function
+    ''' <summary>
+    ''' Validates XML element
+    ''' </summary>
+    Public Shared Function HasDefinedDebugging(node As XmlElement) As Boolean
+        Return node.SelectSingleNode("Debugging") IsNot Nothing
     End Function
     ''' <summary>
     ''' Validates XML element

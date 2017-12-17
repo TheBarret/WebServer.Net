@@ -59,7 +59,7 @@ Public Class VirtualHost
     Public Property KeepAlive As Boolean = True
     Public Property MaxQuerySize As Integer = 255
     Public Property MaxQueryLength As Integer = 255
-    Public Property AccessFilename As String = "access.xml"
+    Public Property AccessConfig As String = "access.xml"
     Public Property DirectoryTemplate As String = "template.xml"
     Public Property ErrorPageTemplate As String = "template.xml"
     Public Property HiddenFileTypes As List(Of String)

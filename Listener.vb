@@ -45,7 +45,7 @@ Public Class Listener
     ''' <summary>
     ''' Raises event if a client throws an exception
     ''' </summary>
-    Public Sub ClientExceptionCaught(sender As Object, ex As Exception)
+    Public Sub ClientExceptionEvent(sender As Object, ex As Exception)
         RaiseEvent ExceptionCaught(sender, ex)
     End Sub
     ''' <summary>
@@ -53,7 +53,7 @@ Public Class Listener
     ''' </summary>
     Public Sub PluginEventInitialize()
         For Each plugin As IPlugin In Me.Plugins
-            plugin.Load()
+            plugin.Load(Me)
         Next
     End Sub
     ''' <summary>
@@ -149,20 +149,18 @@ Public Class Listener
                 Throw New Exception("unable to handle request")
             End If
         Finally
-            Me.HttpListener.BeginGetContext(AddressOf Me.ProcessIncomingRequest, Me.HttpListener)
+            If (Me.Running) Then
+                Me.HttpListener.BeginGetContext(AddressOf Me.ProcessIncomingRequest, Me.HttpListener)
+            End If
         End Try
     End Sub
     ''' <summary>
     ''' Starts client process
     ''' </summary>
     Private Sub BeginClientRequest(sender As Object)
-        Try
-            If (TypeOf sender Is Client) Then
-                CType(sender, Client).Process()
-            End If
-        Catch ex As Exception
-            RaiseEvent ExceptionCaught(sender, ex)
-        End Try
+        If (TypeOf sender Is Client) Then
+            CType(sender, Client).Process()
+        End If
     End Sub
     ''' <summary>
     ''' Blocks current thread while waiting for clients to finish

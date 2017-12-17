@@ -25,21 +25,19 @@ Public Class Client
     ''' Starts the request process
     ''' </summary>
     Public Sub Process()
+        Dim Claimed As Boolean = False
         Try
             If (Me.HasConfig) Then
-
-                Dim Claimed As Boolean = False
                 Me.Listener.Log(String.Format("[Request] {0} {1} {2} {3}", Me.RemoteEndPoint.ToString, Me.Host, Me.Method, Me.Context.Request.Url.AbsolutePath))
                 Me.Response.KeepAlive = Me.Settings.KeepAlive
                 Me.StoreUserData()
                 Me.Listener.PluginEventRequest(Me, Claimed)
                 If (Not Claimed) Then
-                    Me.ValidateRequest(Me.LocalPath(Me.Context.Request.Url.AbsolutePath))
+                    Me.ValidateRequest(Me.LocalPath(Me.Request.Url.AbsolutePath))
                 End If
             End If
         Catch ex As Exception
-            Me.Listener.ClientExceptionCaught(Me, ex)
-            Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.InternalServerError)), "text/html", False)
+            Me.HandleClientException(ex, Claimed)
         Finally
             Me.OutputStream.Close()
             Me.InputStream.Close()
@@ -85,49 +83,6 @@ Public Class Client
         Me.Listener.Log(String.Format("[Response] {0}", StatusCode.ToString))
         Me.Response.StatusCode = StatusCode
         Return StatusCode
-    End Function
-    ''' <summary>
-    ''' Validates the user request
-    ''' </summary>
-    Private Sub ValidateRequest(AbsolutePath As String)
-        AbsolutePath = WebUtility.UrlDecode(AbsolutePath)
-        If (Me.HasAccessFile(AbsolutePath)) Then
-            If (Not Access.Match(Me, AbsolutePath, Me.Settings.AccessFilename)) Then
-                Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
-                Return
-            End If
-        End If
-        If (Directory.Exists(AbsolutePath) Or File.Exists(AbsolutePath)) Then
-            If (Not Me.IsIllegalPath(AbsolutePath)) Then
-                If (File.GetAttributes(AbsolutePath) = FileAttributes.Directory) Then
-                    If (Me.HasIndexPage(AbsolutePath)) Then
-                        Me.PrepaireFile(AbsolutePath)
-                    Else
-                        If (Me.Settings.AllowDirListing) Then
-                            Me.PrepaireDirectory(AbsolutePath)
-                        Else
-                            Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
-                        End If
-                    End If
-                Else
-                    Me.PrepaireFile(AbsolutePath)
-                End If
-            Else
-                Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
-            End If
-        Else
-            Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.NotFound)), "text/html", False)
-        End If
-    End Sub
-    ''' <summary>
-    ''' Returns boolean if a directory contains an access configuration file
-    ''' </summary>
-    Private Function HasAccessFile(Dir As String) As Boolean
-        If (File.GetAttributes(Dir) = FileAttributes.Directory) Then
-            Return New DirectoryInfo(Dir).GetFiles.Any(Function(x) x.Name.Equals(Me.Settings.AccessFilename))
-        Else
-            Return New FileInfo(Dir).Directory.GetFiles.Any(Function(x) x.Name.Equals(Me.Settings.AccessFilename))
-        End If
     End Function
     ''' <summary>
     ''' Constructs headers and sends data to browser
@@ -197,7 +152,7 @@ Public Class Client
     ''' Returns boolean if request contains POST data
     ''' </summary>
     Public Function HasPostData() As Boolean
-        Return Me.Method.ToLower.Equals("post") AndAlso Me.InputStream.Length > 0
+        Return Me.Method.ToLower.Equals("post")
     End Function
     ''' <summary>
     ''' Returns boolean if request contains GET data
@@ -253,7 +208,61 @@ Public Class Client
             End If
         End If
     End Sub
-
+    ''' <summary>
+    ''' Handles exception thrown within client request
+    ''' </summary>
+    Private Sub HandleClientException(ex As Exception, IsClaimed As Boolean)
+        If (Me.Listener.ShowErrors AndAlso IsClaimed) Then
+            Me.Listener.ClientExceptionEvent(Me, ex)
+            Me.PrepairCustom(String.Format(My.Resources.ErrorFormat, ex.Message, ex.StackTrace), "text/html", True)
+        Else
+            Me.Listener.ClientExceptionEvent(Me, ex)
+            Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.InternalServerError)), "text/html", False)
+        End If
+    End Sub
+    ''' <summary>
+    ''' Validates the user request
+    ''' </summary>
+    Private Sub ValidateRequest(AbsolutePath As String)
+        AbsolutePath = WebUtility.UrlDecode(AbsolutePath)
+        If (Me.HasAccessFile(AbsolutePath)) Then
+            If (Not Access.Match(Me, AbsolutePath, Me.Settings.AccessConfig)) Then
+                Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
+                Return
+            End If
+        End If
+        If (Directory.Exists(AbsolutePath) Or File.Exists(AbsolutePath)) Then
+            If (Not Me.IsIllegalPath(AbsolutePath)) Then
+                If (File.GetAttributes(AbsolutePath) = FileAttributes.Directory) Then
+                    If (Me.HasIndexPage(AbsolutePath)) Then
+                        Me.PrepaireFile(AbsolutePath)
+                    Else
+                        If (Me.Settings.AllowDirListing) Then
+                            Me.PrepaireDirectory(AbsolutePath)
+                        Else
+                            Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
+                        End If
+                    End If
+                Else
+                    Me.PrepaireFile(AbsolutePath)
+                End If
+            Else
+                Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
+            End If
+        Else
+            Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.NotFound)), "text/html", False)
+        End If
+    End Sub
+    ''' <summary>
+    ''' Returns boolean if a directory contains an access configuration file
+    ''' </summary>
+    Private Function HasAccessFile(Dir As String) As Boolean
+        If (File.GetAttributes(Dir) = FileAttributes.Directory) Then
+            Return New DirectoryInfo(Dir).GetFiles.Any(Function(x) x.Name.Equals(Me.Settings.AccessConfig))
+        Else
+            Return New FileInfo(Dir).Directory.GetFiles.Any(Function(x) x.Name.Equals(Me.Settings.AccessConfig))
+        End If
+    End Function
 #End Region
 #Region "Properties"
     Public Property Listener As Listener
@@ -299,6 +308,11 @@ Public Class Client
     Public ReadOnly Property ProtocolVersion As Version
         Get
             Return Me.Context.Request.ProtocolVersion
+        End Get
+    End Property
+    Public ReadOnly Property Referrer As String
+        Get
+            Return Me.Context.Request.UrlReferrer.AbsolutePath
         End Get
     End Property
     Public ReadOnly Property Response As HttpListenerResponse

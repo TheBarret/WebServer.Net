@@ -27,7 +27,7 @@ Public Class Access
                 Return rule.Value = TypeAccess.Allow
             End If
         Next
-        Return False
+        Return True
     End Function
     ''' <summary>
     ''' Returns the enum type of given string based rule access
