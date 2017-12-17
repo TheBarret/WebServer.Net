@@ -13,30 +13,28 @@ Public Class Plugin
     End Sub
     Public Sub ClientRequest(Client As Webserver.Client, ByRef Claimed As Boolean) Implements IPlugin.ClientRequest
         Dim requested As String = Client.LocalPath(Client.Request.Url.AbsolutePath)
-        If (Not File.GetAttributes(requested) = FileAttributes.Directory AndAlso File.Exists(requested)) Then
-            If (Path.GetExtension(requested).ToLower = ".xm") Then
-                Try
-                    '// Set request claimed
-                    Claimed = True
-                    '// Prepair script environment and evaluate it
-                    Using sr As New StreamReader(New FileStream(requested, FileMode.Open, FileAccess.Read))
-                        Using Runtime As New Runtime(sr.ReadToEnd) With {.Output = Me, .Input = New NullReader}
-                            Runtime.AddGlobal("host", Client.Host)
-                            Runtime.AddGlobal("method", Client.Method)
-                            Runtime.AddGlobal("userip", Client.RemoteAddress)
-                            Runtime.AddGlobal("useragent", Client.UserAgent)
-                            Runtime.AddGlobal("directory", Client.LocalPath)
-                            Runtime.AddGlobal("protocol", Client.ProtocolVersion.ToString)
-                            Runtime.AddGlobal(Of String, String)(Client.Data)
-                            Runtime.Evaluate()
-                        End Using
+        If (File.Exists(requested) AndAlso Path.GetExtension(requested).ToLower = ".xm") Then
+            Try
+                '// Set request claimed
+                Claimed = True
+                '// Prepair script environment and evaluate it
+                Using sr As New StreamReader(New FileStream(requested, FileMode.Open, FileAccess.Read))
+                    Using Runtime As New Runtime(sr.ReadToEnd) With {.Output = Me, .Input = New NullReader}
+                        Runtime.AddGlobal("host", Client.Host)
+                        Runtime.AddGlobal("method", Client.Method)
+                        Runtime.AddGlobal("userip", Client.RemoteAddress)
+                        Runtime.AddGlobal("useragent", Client.UserAgent)
+                        Runtime.AddGlobal("directory", Client.LocalPath)
+                        Runtime.AddGlobal("protocol", Client.ProtocolVersion.ToString)
+                        Runtime.AddGlobal(Of String, String)(Client.Data)
+                        Runtime.Evaluate()
+                        '// Send output buffer
+                        Client.SendRequest(Client.Encoding.GetBytes(Me.Output.ToString), Client.Listener.GetContentType(requested), File.GetLastWriteTime(requested))
                     End Using
-                Finally
-                    '// Send output buffer
-                    Client.SendRequest(Client.Encoding.GetBytes(Me.Output.ToString), "text/html", File.GetLastWriteTime(requested))
-                    Me.Output.Clear()
-                End Try
-            End If
+                End Using
+            Finally
+                Me.Output.Clear()
+            End Try
         End If
     End Sub
     Public Sub ClientSend(Client As Webserver.Client, ByRef buffer() As Byte, ByRef ContentType As String) Implements IPlugin.ClientSend
