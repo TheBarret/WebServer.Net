@@ -59,5 +59,14 @@ Namespace My.Resources
                 resourceCulture = value
             End Set
         End Property
+        
+        '''<summary>
+        '''  Looks up a localized string similar to &lt;font color=&apos;red&apos;&gt;Plugin exception caught during claimed request&lt;/font&gt;&lt;hr&gt;&lt;pre&gt;&lt;strong&gt;{0}{1}&lt;/strong&gt;&lt;/pre&gt;.
+        '''</summary>
+        Friend ReadOnly Property ErrorFormat() As String
+            Get
+                Return ResourceManager.GetString("ErrorFormat", resourceCulture)
+            End Get
+        End Property
     End Module
 End Namespace
