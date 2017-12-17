@@ -13,6 +13,7 @@ Public Class Client
     Sub New(Listener As Listener, Context As HttpListenerContext)
         Me.Listener = Listener
         Me.Context = Context
+        Me.RequestFinished = False
         Me.Handle = New ManualResetEvent(False)
         Me.Data = New Dictionary(Of String, String)
         If (Not Listener.TryGetConfig(Context.Request.Url.Host, Me.Settings)) Then
@@ -37,7 +38,12 @@ Public Class Client
                 End If
             End If
         Catch ex As Exception
-            Me.HandleClientException(ex, Claimed)
+            If (Claimed AndAlso Me.Listener.ShowErrors) Then
+                Me.PrepairCustom(String.Format(My.Resources.ErrorFormat, ex.Message, ex.StackTrace), "text/html", True)
+            Else
+                Me.Listener.ClientExceptionEvent(Me, ex)
+                Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.InternalServerError)), "text/html", False)
+            End If
         Finally
             Me.OutputStream.Close()
             Me.InputStream.Close()
@@ -88,9 +94,8 @@ Public Class Client
     ''' Constructs headers and sends data to browser
     ''' </summary>
     Public Sub SendRequest(Buffer() As Byte, ContentType As String, LastModified As DateTime, Optional HttpStatusCodeOk As Boolean = True)
-        Try
+        If (Not Me.RequestFinished) Then
             Me.Listener.PluginEventSend(Me, Buffer, ContentType)
-        Finally
             If (HttpStatusCodeOk) Then
                 Me.SetStatus(HttpStatusCode.OK)
             End If
@@ -112,7 +117,8 @@ Public Class Client
             Me.Response.SendChunked = False
             Me.Response.OutputStream.Write(Buffer, 0, Buffer.Length)
             Me.Response.OutputStream.Flush()
-        End Try
+            Me.RequestFinished = True
+        End If
     End Sub
     ''' <summary>
     ''' Returns boolean and adjusts directory that contains an index page
@@ -209,29 +215,17 @@ Public Class Client
         End If
     End Sub
     ''' <summary>
-    ''' Handles exception thrown within client request
-    ''' </summary>
-    Private Sub HandleClientException(ex As Exception, IsClaimed As Boolean)
-        If (Me.Listener.ShowErrors AndAlso IsClaimed) Then
-            Me.Listener.ClientExceptionEvent(Me, ex)
-            Me.PrepairCustom(String.Format(My.Resources.ErrorFormat, ex.Message, ex.StackTrace), "text/html", True)
-        Else
-            Me.Listener.ClientExceptionEvent(Me, ex)
-            Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.InternalServerError)), "text/html", False)
-        End If
-    End Sub
-    ''' <summary>
     ''' Validates the user request
     ''' </summary>
     Private Sub ValidateRequest(AbsolutePath As String)
         AbsolutePath = WebUtility.UrlDecode(AbsolutePath)
-        If (Me.HasAccessFile(AbsolutePath)) Then
-            If (Not Access.Match(Me, AbsolutePath, Me.Settings.AccessConfig)) Then
-                Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
-                Return
-            End If
-        End If
         If (Directory.Exists(AbsolutePath) Or File.Exists(AbsolutePath)) Then
+            If (Me.HasAccessFile(AbsolutePath)) Then
+                If (Not Access.Match(Me, AbsolutePath, Me.Settings.AccessConfig)) Then
+                    Me.PrepairCustom(Me.ErrorPage(Me.SetStatus(HttpStatusCode.Forbidden)), "text/html", False)
+                    Return
+                End If
+            End If
             If (Not Me.IsIllegalPath(AbsolutePath)) Then
                 If (File.GetAttributes(AbsolutePath) = FileAttributes.Directory) Then
                     If (Me.HasIndexPage(AbsolutePath)) Then
@@ -270,6 +264,7 @@ Public Class Client
     Public Property Handle As ManualResetEvent
     Public Property Context As HttpListenerContext
     Public Property Data As Dictionary(Of String, String)
+    Public Property RequestFinished As Boolean
     Public ReadOnly Property Encoding As Encoding
         Get
             Return Me.Settings.Encoder
