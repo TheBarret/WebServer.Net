@@ -16,6 +16,11 @@ Features:
 - Easy XML Configuration
 - Per directory access configurations
 
+# Important Note regarding the Xm Plugin
+
+If you are going to test the XM plugin, you need to recompile the plugin and the xm engine and place them into the `debug` folder.
+Don't forget to adjust the `config.xml` file.
+
 
 Default Welcome Page
 ![](https://i.imgur.com/uxMUp3Q.png)
