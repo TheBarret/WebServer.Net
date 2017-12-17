@@ -1,0 +1,1 @@
+/*    Example Script    */use "xm.library.stdio";use "xm.library.common";print("<strong>Form Test</strong><hr>");if (isset('$_foo')) {     print("<strong>Received:</strong> " + $_foo + "<br><br>"); }print("    <form action='form.xm' method='post'>        <input type='text' name='foo'>        <input type='submit' value='Submit'>    </form>    ");

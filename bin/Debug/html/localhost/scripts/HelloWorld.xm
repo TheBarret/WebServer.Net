@@ -1,0 +1,1 @@
+/*    Example Script    */use "xm.library.stdio";print("Hello, World!");

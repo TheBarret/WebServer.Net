@@ -9,41 +9,41 @@
 	-->
 	<VirtualHost Base="\localhost" Prefix="*:80" Encoding="UTF-8" KeepAlive="True">
         
-        	<!-- Localization -->
-        	<Culture>en-US</Culture>
+        <!-- Localization -->
+        <Culture>en-US</Culture>
         
 		<!-- 
-        		Custom Headers 
-            		Each entry needs to be on a new line
-        	-->
+            Custom Headers 
+            Each entry needs to be on a new line
+        -->
 		<CustomHeaders>
 			Content-Security-Policy = default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';
 		</CustomHeaders>
 		
-        	<!-- 
-            		Default Index Pages 
-            		Each entry needs to be on a new line
-        	-->
+        <!-- 
+            Default Index Pages 
+            Each entry needs to be on a new line
+        -->
 		<DefaultIndexPages>
 			index.htm
 			index.html
 		</DefaultIndexPages>
 		
 		<!-- 
-            		Illegal path characters 
-            		Each entry needs to be on a new line
-        	-->
+            Illegal path characters 
+            Each entry needs to be on a new line
+        -->
 		<IllegalPathChars>
-            		*\..\*
+            *\..\*
 		</IllegalPathChars>
 		
 		<!-- Hide directories and files beginning with a dot -->
 		<HideDotNames>True</HideDotNames>
 		
 		<!-- 
-            		Hide files with these extensions 
-            		Each entry needs to be on a new line
-        	-->
+            Hide files with these extensions 
+            Each entry needs to be on a new line
+        -->
 		<HiddenFileTypes>
 			*.db
 			*.cfg
@@ -59,12 +59,8 @@
 		<!-- Maximum GET/POST variable size per query -->
 		<MaxQueryVariableSize>255</MaxQueryVariableSize>
 		
-        	<!-- 
-            		Access rules config filename 
-            		This file can exist in any directory,
-            		each config can modify who can access the folder or its files
-        	-->
-        	<AccessFile>access.xml</AccessFile>
+        <!-- Access rules config filename -->
+        <AccessFile>access.xml</AccessFile>
                 
 		<!-- Allow users to browse directories -->
 		<AllowDirListing>True</AllowDirListing>
@@ -95,19 +91,19 @@
 	<Threads Workers="2" IO="2" Delay="500"></Threads>
 	
 	<!-- 
-        	Content Type Definitions 
-        	Each entry needs to be on a new line
-    	-->
+        Content Type Definitions 
+        Each entry needs to be on a new line
+    -->
 	<ContentType>
 		.txt 		= text/plain
 		.css 		= text/css
-        	.md 		= text/html
+        .md 		= text/html
 		.htm 		= text/html
-		.html		= text/html
-		.shtml 	    	= text/html
+		.html 	    = text/html
+		.shtml 	    = text/html
 		.png 		= image/png
 		.gif 		= image/gif
-		.jpeg 	    	= image/jpeg
+		.jpeg 	    = image/jpeg
 		.jpg 		= image/jpeg
 		.ico 		= image/x-icon
 		.js 		= application/x-javascript
@@ -115,11 +111,15 @@
 		.rar 		= application/x-rar-compressed
 	</ContentType>
 	
-    	<!-- 
-        	Webserver Plugins
-        	Each entry needs to be on a new line
-    	-->
-    	<Plugins>
-    	</Plugins>
+    <!-- 
+        Webserver Plugins
+        Each entry needs to be on a new line
+    -->
+    <Plugins>
+        ..\Xm.Plugin.dll
+    </Plugins>
+    
+    <!-- Debugging Options -->
+    <Debugging ShowErrors="False"></Debugging>
     
 </Config>

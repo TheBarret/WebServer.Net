@@ -1,0 +1,1 @@
+/*    Example Script    */use "xm.library.stdio";print("<strong>Server Variables</strong><hr><pre>");print("Host         : " + $host);print("Method       : " + $method);print("User agent   : " + $useragent);print("User ip      : " + $userip);print("Protocol     : " + $protocol);print("Base         : " + $directory);print("</pre>");

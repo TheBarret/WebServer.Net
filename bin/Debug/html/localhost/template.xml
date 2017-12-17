@@ -12,27 +12,27 @@
 		<Body>
 		<![CDATA[
 			<html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
-			<head>
-			<title>Error {0}</title>
-                        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-			</head>
-			<body>
-			<style>
-                        a img 		    { border: none; }
-                        a:hover, a:active   { text-decoration: underline; color: #9AA;
+				<head>
+					<title>Error {0}</title>
+                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+				</head>
+				<body>
+					<style>
+                        a img 			    { border: none; }
+                        a:hover, a:active 	{ text-decoration: underline; color: #9AA;
                                             font-weight: bold; background-color: inherit; }
-                        html, body 	    { background-color: #B9B9B9; font-family: Terminal;
+                        html, body 		    { background-color: #B9B9B9; font-family: Terminal;
                                             font-size: 100%; color: #234; }
                         a:link, a:visited   { color: #455; text-decoration: none; 
                                             font: 80% Terminal; font-weight: bold;
                                             background-color: inherit; }
-                        h1 		    { color: #666; font-family: Terminal;
+                        h1 				    { color: #666; font-family: Terminal;
                                             font-weight: bolder; letter-spacing: 1px;
                                             font-size: 250%; background-color: inherit; }
                     </style>
-		    <div align="center"><h1>Error {0} ({1})</h1><hr></div>
-		    </body>
-		</html>
+					<div align="center"><h1>Error {0} ({1})</h1><hr></div>
+				</body>
+			</html>
 		]]>
 		</Body>
 		
@@ -57,17 +57,17 @@
 			</head>
 			<body>
 				<style>
-					a img 			{ border: none; }
+					a img 				{ border: none; }
 					a:hover, a:active 	{ text-decoration: underline; color: #9AA;
-								font-weight: bold; background-color: inherit; }
-					html, body		{ background-color: #B9B9B9; font-family: Terminal;
-								font-size: 100%; color: #234; }
+										font-weight: bold; background-color: inherit; }
+					html, body 			{ background-color: #B9B9B9; font-family: Terminal;
+										font-size: 100%; color: #234; }
 					a:link, a:visited 	{ color: #455; text-decoration: none; 
-								font: 80% Terminal; font-weight: bold;
-								background-color: inherit; }
-					h1 			{ color: #666; font-family: Terminal;
-								font-weight: bolder; letter-spacing: 1px;
-								font-size: 250%; background-color: inherit; }
+										font: 80% Terminal; font-weight: bold;
+										background-color: inherit; }
+					h1 					{ color: #666; font-family: Terminal;
+										font-weight: bolder; letter-spacing: 1px;
+										font-size: 250%; background-color: inherit; }
 				</style>
 				<div align="left">
 					<h1>Index of {LOCATION}</h1>
