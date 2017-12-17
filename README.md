@@ -26,5 +26,8 @@ Directory Listing (With Readme.md support)
 Custom Error Pages
 ![](https://i.imgur.com/8EHfbUo.png)
 
-XM Front-End
+Xm Script Plugin
+![](https://i.imgur.com/JcDH94p.png)
+
+XM Script Post Form Test
 ![](https://i.imgur.com/tfqfPui.png)
