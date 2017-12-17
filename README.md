@@ -16,7 +16,7 @@ Features:
 - Easy XML Configuration
 - Per directory access configurations
 
-# Important Note regarding the Xm Plugin
+# Important Note Regarding The Xm Plugin and Xm Engine
 
 If you are going to test the XM plugin, you need to recompile the plugin and
 the Xm engine and place both dll's into the `debug` folder.
